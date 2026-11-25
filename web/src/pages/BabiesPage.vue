@@ -155,7 +155,7 @@ async function onDelete(baby: Baby) {
 
 <style scoped>
 .babies-page {
-  min-height: calc(100vh - 65px);
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;

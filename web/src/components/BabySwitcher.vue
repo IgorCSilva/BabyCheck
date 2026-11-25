@@ -51,12 +51,12 @@ function goToBabies() {
   display: flex;
   align-items: center;
   gap: var(--space-1);
-  overflow-x: auto;
+  /* overflow-x: auto; */
 }
 
 .baby-avatar {
-  width: 40px;
-  height: 40px;
+  width: 25px;
+  height: 25px;
   flex-shrink: 0;
   border: none;
   border-radius: var(--radius-pill);
@@ -67,13 +67,16 @@ function goToBabies() {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-left: 9px;
+  opacity: 0.7;
   cursor: pointer;
   position: relative;
   transition: transform 0.15s ease;
 }
 
 .baby-avatar.active {
-  transform: translateY(-3px);
+  transform: scale(1.4);
+  opacity: 1;
 }
 
 .baby-avatar.active::before {

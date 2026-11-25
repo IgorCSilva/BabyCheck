@@ -13,7 +13,7 @@ defineProps<{ title: string }>();
 
 <style scoped>
 .auth-screen {
-  min-height: 100vh;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
