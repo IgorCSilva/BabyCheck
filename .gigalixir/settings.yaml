@@ -1,0 +1,6 @@
+default_deploy_target: gigalixir
+deploy_targets:
+  gigalixir:
+    app: babycheck-api
+  babycheck:
+    app: babycheck-api

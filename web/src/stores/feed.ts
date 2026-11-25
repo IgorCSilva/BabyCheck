@@ -21,6 +21,12 @@ export interface BabyActivitySummary {
   diaper_last_logged_at: string | null;
   bottle_last_logged_at: string | null;
   breastfeeding_last_logged_at: string | null;
+  diaper_avg_per_day_7d: number;
+  bottle_avg_per_day_7d: number;
+  breastfeeding_avg_per_day_7d: number;
+  diaper_long_gap: boolean;
+  bottle_long_gap: boolean;
+  breastfeeding_long_gap: boolean;
 }
 
 const PAGE_SIZE = 20;

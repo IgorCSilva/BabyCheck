@@ -1,9 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
-import { useFeedStore, type FeedEntry } from "./feed";
+import { useFeedStore, type BabyActivitySummary, type FeedEntry } from "./feed";
 
 function jsonResponse(status: number, body: unknown) {
   return new Response(status === 204 ? null : JSON.stringify(body), { status });
+}
+
+function summary(overrides: Partial<BabyActivitySummary> = {}): BabyActivitySummary {
+  return {
+    baby_id: 1,
+    baby_name: "Riley",
+    baby_theme_color: "#F5A9B8",
+    diaper_last_logged_at: null,
+    bottle_last_logged_at: null,
+    breastfeeding_last_logged_at: null,
+    diaper_avg_per_day_7d: 0,
+    bottle_avg_per_day_7d: 0,
+    breastfeeding_avg_per_day_7d: 0,
+    diaper_long_gap: false,
+    bottle_long_gap: false,
+    breastfeeding_long_gap: false,
+    ...overrides,
+  };
 }
 
 function entry(overrides: Partial<FeedEntry> = {}): FeedEntry {
@@ -83,19 +101,16 @@ describe("feed store", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("fetchSummary loads the per-baby summary", async () => {
+  it("fetchSummary loads the per-baby summary, including rolling averages and gap flags", async () => {
     const feed = useFeedStore();
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       jsonResponse(200, {
         data: [
-          {
-            baby_id: 1,
-            baby_name: "Riley",
-            baby_theme_color: "#F5A9B8",
+          summary({
             diaper_last_logged_at: "2026-11-20T08:00:00Z",
-            bottle_last_logged_at: null,
-            breastfeeding_last_logged_at: null,
-          },
+            diaper_avg_per_day_7d: 3.2,
+            diaper_long_gap: true,
+          }),
         ],
       }),
     );
@@ -104,21 +119,14 @@ describe("feed store", () => {
 
     expect(feed.summary).toHaveLength(1);
     expect(feed.summary[0].baby_id).toBe(1);
+    expect(feed.summary[0].diaper_avg_per_day_7d).toBe(3.2);
+    expect(feed.summary[0].diaper_long_gap).toBe(true);
   });
 
   it("reset clears entries, summary, and pagination state", () => {
     const feed = useFeedStore();
     feed.entries = [entry()];
-    feed.summary = [
-      {
-        baby_id: 1,
-        baby_name: "Riley",
-        baby_theme_color: "#F5A9B8",
-        diaper_last_logged_at: null,
-        bottle_last_logged_at: null,
-        breastfeeding_last_logged_at: null,
-      },
-    ];
+    feed.summary = [summary()];
     feed.hasMore = false;
 
     feed.reset();
