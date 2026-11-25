@@ -6,6 +6,7 @@ import { useDiaperLogsStore } from "@/stores/diaperLogs";
 import { useBottleFeedingsStore } from "@/stores/bottleFeedings";
 import { useBreastfeedingLogsStore } from "@/stores/breastfeedingLogs";
 import { useFeedStore } from "@/stores/feed";
+import { useChartsStore } from "@/stores/charts";
 import TopBar from "@/components/TopBar.vue";
 import PageNav from "@/components/PageNav.vue";
 
@@ -15,6 +16,7 @@ const diaperLogs = useDiaperLogsStore();
 const bottleFeedings = useBottleFeedingsStore();
 const breastfeedingLogs = useBreastfeedingLogsStore();
 const feed = useFeedStore();
+const charts = useChartsStore();
 
 // Centralized here rather than in every place that can trigger a
 // logout, so a second account signing in on the same browser never
@@ -28,6 +30,7 @@ watch(
       bottleFeedings.reset();
       breastfeedingLogs.reset();
       feed.reset();
+      charts.reset();
     }
   },
 );

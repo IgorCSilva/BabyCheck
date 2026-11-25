@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
-import { useFeedStore } from "./feed";
+import { useFeedStore, type FeedEntry } from "./feed";
 
 function jsonResponse(status: number, body: unknown) {
   return new Response(status === 204 ? null : JSON.stringify(body), { status });
 }
 
-function entry(overrides: Record<string, unknown> = {}) {
+function entry(overrides: Partial<FeedEntry> = {}): FeedEntry {
   return {
     type: "diaper",
     id: 1,

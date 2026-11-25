@@ -20,6 +20,9 @@ const { t } = useI18n();
     <button class="page-nav-link" type="button" @click="router.push('/breastfeeding')">
       {{ t("nav.breastfeeding") }}
     </button>
+    <button class="page-nav-link" type="button" @click="router.push('/charts')">
+      {{ t("nav.charts") }}
+    </button>
     <button class="page-nav-link" type="button" @click="router.push('/babies')">
       {{ t("nav.manageBabies") }}
     </button>

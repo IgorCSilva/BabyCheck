@@ -4,6 +4,7 @@ export interface MessageSchema {
     diaperLog: string;
     bottleFeeding: string;
     breastfeeding: string;
+    charts: string;
     manageBabies: string;
     logout: string;
   };
@@ -19,6 +20,15 @@ export interface MessageSchema {
     justNow: string;
     ago: string;
     loadingMore: string;
+  };
+  charts: {
+    heading: string;
+    today: string;
+    sevenDays: string;
+    thirtyDays: string;
+    custom: string;
+    to: string;
+    empty: string;
   };
   auth: {
     genericError: string;
@@ -180,6 +190,7 @@ const en: MessageSchema = {
     diaperLog: "Diaper log",
     bottleFeeding: "Bottle feeding",
     breastfeeding: "Breastfeeding",
+    charts: "Charts",
     manageBabies: "Manage babies",
     logout: "Log out",
   },
@@ -195,6 +206,15 @@ const en: MessageSchema = {
     justNow: "Just now",
     ago: "ago",
     loadingMore: "Loading more…",
+  },
+  charts: {
+    heading: "Trends",
+    today: "Today",
+    sevenDays: "7 days",
+    thirtyDays: "30 days",
+    custom: "Custom",
+    to: "to",
+    empty: "No data in this range yet.",
   },
   auth: {
     genericError: "something went wrong",

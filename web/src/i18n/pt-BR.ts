@@ -6,6 +6,7 @@ const ptBR: MessageSchema = {
     diaperLog: "Registro de fraldas",
     bottleFeeding: "Mamadeira",
     breastfeeding: "Amamentação",
+    charts: "Gráficos",
     manageBabies: "Gerenciar bebês",
     logout: "Sair",
   },
@@ -21,6 +22,15 @@ const ptBR: MessageSchema = {
     justNow: "Agora mesmo",
     ago: "atrás",
     loadingMore: "Carregando mais…",
+  },
+  charts: {
+    heading: "Tendências",
+    today: "Hoje",
+    sevenDays: "7 dias",
+    thirtyDays: "30 dias",
+    custom: "Personalizado",
+    to: "até",
+    empty: "Nenhum dado neste período ainda.",
   },
   auth: {
     genericError: "algo deu errado",
