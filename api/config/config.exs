@@ -37,6 +37,20 @@ config :api, web_base_url: "http://localhost:3000"
 
 config :api, Api.Mailer, adapter: Swoosh.Adapters.Local
 
+# Recomputes rolling averages / gap-reminder flags for every baby on a
+# schedule, independent of anyone having the app open — the same job that
+# will eventually drive Step 10's push notifications. The live chip values
+# shown in the feed are computed fresh on each request (see `Api.Insights`),
+# so this periodic pass only needs to be frequent enough for that future
+# reminder consumer, not for UI freshness.
+config :api, Oban,
+  repo: Api.Repo,
+  plugins: [
+    {Oban.Plugins.Cron, crontab: [{"*/10 * * * *", Api.Insights.ComputeInsightsWorker}]},
+    {Oban.Plugins.Pruner, max_age: 86_400}
+  ],
+  queues: [insights: 5]
+
 # Used by Swoosh's HTTP-API-based adapters (e.g. Resend in prod); SMTP
 # (dev/test, via Mailpit) doesn't need it and turns it off below.
 config :swoosh, :api_client, Swoosh.ApiClient.Finch

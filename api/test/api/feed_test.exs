@@ -178,5 +178,30 @@ defmodule Api.FeedTest do
 
       assert Feed.summary(user) == []
     end
+
+    test "includes a rolling 7-day average and gap flag per metric" do
+      user = user_fixture()
+      baby = baby_fixture(user)
+      now = DateTime.utc_now()
+
+      for hours_ago <- [72, 96, 120, 144, 160] do
+        diaper_fixture(baby, %{logged_at: DateTime.add(now, -hours_ago * 3600, :second)})
+      end
+
+      assert [
+               %{
+                 diaper_avg_per_day_7d: diaper_avg,
+                 diaper_long_gap: true,
+                 bottle_avg_per_day_7d: bottle_avg,
+                 bottle_long_gap: false,
+                 breastfeeding_avg_per_day_7d: breastfeeding_avg,
+                 breastfeeding_long_gap: false
+               }
+             ] = Feed.summary(user)
+
+      assert diaper_avg >= 0.5
+      assert bottle_avg == 0.0
+      assert breastfeeding_avg == 0.0
+    end
   end
 end

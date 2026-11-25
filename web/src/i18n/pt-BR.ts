@@ -22,6 +22,8 @@ const ptBR: MessageSchema = {
     justNow: "Agora mesmo",
     ago: "atrás",
     loadingMore: "Carregando mais…",
+    avgPerDay: "{avg}/dia em média",
+    longGapHint: "Mais tempo que o normal desde o último registro",
   },
   charts: {
     heading: "Tendências",

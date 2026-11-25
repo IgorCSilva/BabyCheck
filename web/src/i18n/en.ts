@@ -20,6 +20,8 @@ export interface MessageSchema {
     justNow: string;
     ago: string;
     loadingMore: string;
+    avgPerDay: string;
+    longGapHint: string;
   };
   charts: {
     heading: string;
@@ -206,6 +208,8 @@ const en: MessageSchema = {
     justNow: "Just now",
     ago: "ago",
     loadingMore: "Loading more…",
+    avgPerDay: "{avg}/day avg",
+    longGapHint: "Longer than usual since the last one",
   },
   charts: {
     heading: "Trends",

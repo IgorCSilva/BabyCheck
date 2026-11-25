@@ -35,6 +35,22 @@ function metricLastLoggedAt(summary: BabyActivitySummary, metric: Metric): strin
   return summary.breastfeeding_last_logged_at;
 }
 
+function metricAvgPerDay(summary: BabyActivitySummary, metric: Metric): number {
+  if (metric === "diaper") return summary.diaper_avg_per_day_7d;
+  if (metric === "bottle") return summary.bottle_avg_per_day_7d;
+  return summary.breastfeeding_avg_per_day_7d;
+}
+
+function metricLongGap(summary: BabyActivitySummary, metric: Metric): boolean {
+  if (metric === "diaper") return summary.diaper_long_gap;
+  if (metric === "bottle") return summary.bottle_long_gap;
+  return summary.breastfeeding_long_gap;
+}
+
+function formatAvg(avg: number): string {
+  return avg.toFixed(1);
+}
+
 function detectFreshUpdates(previous: BabyActivitySummary[], next: BabyActivitySummary[]) {
   const previousByBabyId = new Map(previous.map((entry) => [entry.baby_id, entry]));
 
@@ -110,13 +126,30 @@ function entryKey(entry: FeedEntry): string {
             v-for="metric in METRICS"
             :key="metric"
             class="chip"
-            :class="[`chip-${metric}`, { glow: glowingChips.has(chipKey(baby.id, metric)) }]"
+            :class="[
+              `chip-${metric}`,
+              {
+                glow: glowingChips.has(chipKey(baby.id, metric)),
+                'long-gap': !!summaryFor(baby.id) && metricLongGap(summaryFor(baby.id)!, metric),
+              },
+            ]"
+            :title="
+              summaryFor(baby.id) && metricLongGap(summaryFor(baby.id)!, metric)
+                ? t('feed.longGapHint')
+                : undefined
+            "
           >
             <span class="chip-icon">{{ metricIcon(metric) }}</span>
-            <template v-if="summaryFor(baby.id) && metricLastLoggedAt(summaryFor(baby.id)!, metric)">
-              {{ relativeTime(metricLastLoggedAt(summaryFor(baby.id)!, metric)!) }}
-            </template>
-            <span v-else class="chip-none">{{ t("feed.noLogsYet") }}</span>
+            <span class="chip-main">
+              <template v-if="summaryFor(baby.id) && metricLastLoggedAt(summaryFor(baby.id)!, metric)">
+                {{ relativeTime(metricLastLoggedAt(summaryFor(baby.id)!, metric)!) }}
+              </template>
+              <span v-else class="chip-none">{{ t("feed.noLogsYet") }}</span>
+
+              <span v-if="summaryFor(baby.id) && metricAvgPerDay(summaryFor(baby.id)!, metric) > 0" class="chip-avg">
+                {{ t("feed.avgPerDay", { avg: formatAvg(metricAvgPerDay(summaryFor(baby.id)!, metric)) }) }}
+              </span>
+            </span>
           </span>
         </div>
       </div>
@@ -222,6 +255,35 @@ function entryKey(entry: FeedEntry): string {
 
 .chip-none {
   opacity: 0.7;
+}
+
+.chip-main {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.chip-avg {
+  font-size: 0.6875rem;
+  opacity: 0.7;
+}
+
+/* Ambient, not an alert: a slightly more saturated fill and a touch more
+   ink, no color change, no motion — just enough to notice on a glance. */
+.chip.long-gap {
+  color: var(--color-ink);
+}
+
+.chip.long-gap.chip-diaper {
+  background: color-mix(in srgb, var(--color-diaper) 30%, transparent);
+}
+
+.chip.long-gap.chip-bottle {
+  background: color-mix(in srgb, var(--color-bottle) 30%, transparent);
+}
+
+.chip.long-gap.chip-breastfeeding {
+  background: color-mix(in srgb, var(--color-breastfeeding) 30%, transparent);
 }
 
 .chip.glow::before {
