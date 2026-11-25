@@ -3,12 +3,21 @@ import { watch } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useBabiesStore } from "@/stores/babies";
 import { useDiaperLogsStore } from "@/stores/diaperLogs";
+import { useBottleFeedingsStore } from "@/stores/bottleFeedings";
+import { useBreastfeedingLogsStore } from "@/stores/breastfeedingLogs";
+import { useFeedStore } from "@/stores/feed";
+import { useChartsStore } from "@/stores/charts";
 import TopBar from "@/components/TopBar.vue";
 import PageNav from "@/components/PageNav.vue";
+import QuickLogBar from "@/components/QuickLogBar.vue";
 
 const auth = useAuthStore();
 const babies = useBabiesStore();
 const diaperLogs = useDiaperLogsStore();
+const bottleFeedings = useBottleFeedingsStore();
+const breastfeedingLogs = useBreastfeedingLogsStore();
+const feed = useFeedStore();
+const charts = useChartsStore();
 
 // Centralized here rather than in every place that can trigger a
 // logout, so a second account signing in on the same browser never
@@ -19,6 +28,10 @@ watch(
     if (!isAuthenticated) {
       babies.reset();
       diaperLogs.reset();
+      bottleFeedings.reset();
+      breastfeedingLogs.reset();
+      feed.reset();
+      charts.reset();
     }
   },
 );
@@ -33,6 +46,7 @@ watch(
     <main class="app-main">
       <router-view />
     </main>
+    <QuickLogBar v-if="auth.isAuthenticated" />
   </div>
 </template>
 

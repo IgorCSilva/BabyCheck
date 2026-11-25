@@ -8,8 +8,20 @@ const { t } = useI18n();
 
 <template>
   <nav class="page-nav">
+    <button class="page-nav-link" type="button" @click="router.push('/')">
+      {{ t("nav.feed") }}
+    </button>
     <button class="page-nav-link" type="button" @click="router.push('/diapers')">
       {{ t("nav.diaperLog") }}
+    </button>
+    <button class="page-nav-link" type="button" @click="router.push('/bottle-feedings')">
+      {{ t("nav.bottleFeeding") }}
+    </button>
+    <button class="page-nav-link" type="button" @click="router.push('/breastfeeding')">
+      {{ t("nav.breastfeeding") }}
+    </button>
+    <button class="page-nav-link" type="button" @click="router.push('/charts')">
+      {{ t("nav.charts") }}
     </button>
     <button class="page-nav-link" type="button" @click="router.push('/babies')">
       {{ t("nav.manageBabies") }}

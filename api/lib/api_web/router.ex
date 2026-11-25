@@ -24,12 +24,19 @@ defmodule ApiWeb.Router do
       pipe_through :authenticated
 
       get "/me", ProfileController, :show
+      get "/feed", FeedController, :index
+      get "/feed/summary", FeedController, :summary
 
       resources "/babies", BabyController, only: [:index, :create, :update, :delete] do
         resources "/diaper_logs", DiaperLogController, only: [:index, :create]
+        resources "/bottle_feedings", BottleFeedingController, only: [:index, :create]
+        resources "/breastfeeding_logs", BreastfeedingLogController, only: [:index, :create]
+        get "/charts", ChartController, :index
       end
 
       resources "/diaper_logs", DiaperLogController, only: [:update, :delete]
+      resources "/bottle_feedings", BottleFeedingController, only: [:update, :delete]
+      resources "/breastfeeding_logs", BreastfeedingLogController, only: [:update, :delete]
     end
   end
 end
