@@ -63,8 +63,21 @@ if config_env() == :prod do
 
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
+  # Gigalixir's build image has no OS CA bundle, so the default `ssl: true`
+  # has nothing to validate Supabase's certificate against ("Unknown CA").
+  # castore vendors Mozilla's CA bundle as a Hex dependency instead, and the
+  # hostname check is set explicitly since Postgrex doesn't derive it from
+  # the URL on its own.
+  database_host = database_url |> URI.parse() |> Map.fetch!(:host) |> to_charlist()
+
   config :api, Api.Repo,
     ssl: true,
+    ssl_opts: [
+      verify: :verify_peer,
+      cacertfile: CAStore.file_path(),
+      server_name_indication: database_host,
+      customize_hostname_check: [match_fun: :public_key.pkix_verify_hostname_match_fun(:https)]
+    ],
     url: database_url,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
     socket_options: maybe_ipv6

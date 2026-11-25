@@ -36,6 +36,7 @@ defmodule Api.MixProject do
       {:phoenix_ecto, "~> 4.4"},
       {:ecto_sql, "~> 3.10"},
       {:postgrex, ">= 0.0.0"},
+      {:castore, "~> 1.0"},
       {:telemetry_metrics, "~> 0.6"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.20"},
@@ -46,7 +47,8 @@ defmodule Api.MixProject do
       {:cors_plug, "~> 3.0"},
       {:swoosh, "~> 1.16"},
       {:gen_smtp, "~> 1.2"},
-      {:finch, "~> 0.18"}
+      {:finch, "~> 0.18"},
+      {:oban, "~> 2.18"}
     ]
   end
 
