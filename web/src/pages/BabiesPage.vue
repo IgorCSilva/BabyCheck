@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useBabiesStore, type Baby } from "@/stores/babies";
 import { ApiError } from "@/lib/api";
+import { translateApiError, translateFieldErrors } from "@/i18n";
+
+const { t } = useI18n();
 
 const SWATCHES = [
   "#F5A9B8", // soft pink
@@ -72,10 +76,10 @@ async function onSubmit() {
     cancelEdit();
   } catch (error) {
     if (error instanceof ApiError) {
-      errorMessage.value = Object.keys(error.fieldErrors).length ? "" : error.message;
-      fieldErrors.value = error.fieldErrors;
+      errorMessage.value = Object.keys(error.fieldErrors).length ? "" : translateApiError(error);
+      fieldErrors.value = translateFieldErrors(error.fieldErrors);
     } else {
-      errorMessage.value = "something went wrong";
+      errorMessage.value = t("auth.genericError");
     }
   } finally {
     submitting.value = false;
@@ -83,7 +87,7 @@ async function onSubmit() {
 }
 
 async function onDelete(baby: Baby) {
-  if (!window.confirm(`Remove ${baby.name}? This can't be undone.`)) return;
+  if (!window.confirm(t("babies.confirmDelete", { name: baby.name }))) return;
 
   await babies.deleteBaby(baby.id).catch(() => {});
   if (editingId.value === baby.id) cancelEdit();
@@ -93,19 +97,19 @@ async function onDelete(baby: Baby) {
 <template>
   <div class="babies-page">
     <div class="babies-card">
-      <h1 class="heading">{{ isEditing ? "Edit baby" : "Add a baby" }}</h1>
+      <h1 class="heading">{{ isEditing ? t("babies.editTitle") : t("babies.addTitle") }}</h1>
 
       <form @submit.prevent="onSubmit">
         <p v-if="errorMessage" class="form-error">{{ errorMessage }}</p>
 
         <div class="field">
-          <label for="baby-name">Name</label>
+          <label for="baby-name">{{ t("babies.nameLabel") }}</label>
           <input id="baby-name" v-model="name" type="text" maxlength="60" required />
           <p v-if="fieldErrors.name" class="field-error">{{ fieldErrors.name.join(", ") }}</p>
         </div>
 
         <div class="field">
-          <label>Theme color</label>
+          <label>{{ t("babies.themeColorLabel") }}</label>
           <div class="swatch-grid">
             <button
               v-for="swatch in SWATCHES"
@@ -114,12 +118,12 @@ async function onDelete(baby: Baby) {
               class="swatch"
               :class="{ selected: !useCustomColor && themeColor === swatch }"
               :style="{ background: swatch }"
-              :aria-label="`Use ${swatch}`"
+              :aria-label="t('babies.useColor', { color: swatch })"
               @click="selectSwatch(swatch)"
             />
             <label class="swatch swatch-custom" :class="{ selected: useCustomColor }">
               <input type="color" :value="customColor" @input="selectCustom" />
-              <span v-if="!useCustomColor" class="swatch-custom-label">Custom</span>
+              <span v-if="!useCustomColor" class="swatch-custom-label">{{ t("babies.custom") }}</span>
               <span v-else class="swatch-custom-swatch" :style="{ background: customColor }" />
             </label>
           </div>
@@ -129,10 +133,12 @@ async function onDelete(baby: Baby) {
         </div>
 
         <button class="btn-primary" type="submit" :disabled="submitting">
-          {{ submitting ? "Saving…" : isEditing ? "Save changes" : "Add baby" }}
+          {{ submitting ? t("babies.saving") : isEditing ? t("babies.saveSubmit") : t("babies.addSubmit") }}
         </button>
 
-        <button v-if="isEditing" class="helper-link" type="button" @click="cancelEdit">Cancel</button>
+        <button v-if="isEditing" class="helper-link" type="button" @click="cancelEdit">
+          {{ t("babies.cancel") }}
+        </button>
       </form>
     </div>
 
@@ -142,13 +148,15 @@ async function onDelete(baby: Baby) {
           {{ baby.name.charAt(0).toUpperCase() }}
         </span>
         <span class="baby-row-name">{{ baby.name }}</span>
-        <button class="baby-row-action" type="button" @click="startEdit(baby)">Edit</button>
+        <button class="baby-row-action" type="button" @click="startEdit(baby)">
+          {{ t("babies.edit") }}
+        </button>
         <button class="baby-row-action baby-row-delete" type="button" @click="onDelete(baby)">
-          Delete
+          {{ t("babies.delete") }}
         </button>
       </div>
 
-      <router-link class="helper-link" to="/">Back home</router-link>
+      <router-link class="helper-link" to="/">{{ t("babies.backHome") }}</router-link>
     </div>
   </div>
 </template>

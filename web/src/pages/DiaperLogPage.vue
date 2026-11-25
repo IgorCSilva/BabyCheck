@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useBabiesStore } from "@/stores/babies";
 import { useDiaperLogsStore, type DiaperLog } from "@/stores/diaperLogs";
 
@@ -7,6 +8,7 @@ type Preset = "today" | "7d" | "30d" | "custom";
 
 const babies = useBabiesStore();
 const diaperLogs = useDiaperLogsStore();
+const { t, locale } = useI18n();
 
 const preset = ref<Preset>("today");
 const customFrom = ref(toDateInputValue(new Date()));
@@ -77,13 +79,13 @@ function dayLabel(iso: string): string {
   const diffDays = Math.round(
     (startOfDay(new Date()).getTime() - startOfDay(date).getTime()) / 86_400_000,
   );
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  if (diffDays === 0) return t("diaperLog.today");
+  if (diffDays === 1) return t("diaperLog.yesterday");
+  return date.toLocaleDateString(locale.value, { month: "short", day: "numeric" });
 }
 
 function timeLabel(iso: string): string {
-  return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString(locale.value, { hour: "numeric", minute: "2-digit" });
 }
 
 const groupedLogs = computed(() => {
@@ -170,7 +172,7 @@ async function saveEdit() {
 }
 
 async function onDelete(log: DiaperLog) {
-  if (!window.confirm("Delete this diaper change? This can't be undone.")) return;
+  if (!window.confirm(t("diaperLog.confirmDelete"))) return;
   await diaperLogs.deleteLog(log.id).catch(() => {});
   if (editingId.value === log.id) cancelEdit();
 }
@@ -180,7 +182,7 @@ async function onDelete(log: DiaperLog) {
   <div class="diaper-page">
     <div class="range-header">
       <p class="range-total heading">{{ diaperLogs.logs.length }}</p>
-      <p class="range-total-label">diaper changes</p>
+      <p class="range-total-label">{{ t("diaperLog.total") }}</p>
 
       <div class="preset-tabs">
         <button
@@ -189,7 +191,7 @@ async function onDelete(log: DiaperLog) {
           :class="{ active: preset === 'today' }"
           @click="selectPreset('today')"
         >
-          Today
+          {{ t("diaperLog.today") }}
         </button>
         <button
           type="button"
@@ -197,7 +199,7 @@ async function onDelete(log: DiaperLog) {
           :class="{ active: preset === '7d' }"
           @click="selectPreset('7d')"
         >
-          7 days
+          {{ t("diaperLog.sevenDays") }}
         </button>
         <button
           type="button"
@@ -205,7 +207,7 @@ async function onDelete(log: DiaperLog) {
           :class="{ active: preset === '30d' }"
           @click="selectPreset('30d')"
         >
-          30 days
+          {{ t("diaperLog.thirtyDays") }}
         </button>
         <button
           type="button"
@@ -213,13 +215,13 @@ async function onDelete(log: DiaperLog) {
           :class="{ active: preset === 'custom' }"
           @click="selectPreset('custom')"
         >
-          Custom
+          {{ t("diaperLog.custom") }}
         </button>
       </div>
 
       <div v-if="preset === 'custom'" class="custom-range">
         <input v-model="customFrom" type="date" />
-        <span>to</span>
+        <span>{{ t("diaperLog.to") }}</span>
         <input v-model="customTo" type="date" />
       </div>
     </div>
@@ -231,10 +233,10 @@ async function onDelete(log: DiaperLog) {
       type="button"
       @click="onQuickLog"
     >
-      Log diaper change
+      {{ t("diaperLog.quickLog") }}
     </button>
 
-    <div v-if="groupedLogs.length === 0" class="empty-state">No diaper changes in this range yet.</div>
+    <div v-if="groupedLogs.length === 0" class="empty-state">{{ t("diaperLog.empty") }}</div>
 
     <div v-for="group in groupedLogs" :key="group.label" class="day-group">
       <h2 class="day-header">{{ group.label }}</h2>
@@ -243,22 +245,24 @@ async function onDelete(log: DiaperLog) {
         <template v-if="editingId === log.id">
           <form class="log-edit-form" @submit.prevent="saveEdit">
             <input v-model="editLoggedAt" type="datetime-local" required />
-            <label><input v-model="editPeed" type="checkbox" /> Peed</label>
-            <label><input v-model="editPooped" type="checkbox" /> Pooped</label>
+            <label><input v-model="editPeed" type="checkbox" /> {{ t("diaperLog.peed") }}</label>
+            <label><input v-model="editPooped" type="checkbox" /> {{ t("diaperLog.pooped") }}</label>
             <div class="log-edit-actions">
-              <button class="log-row-action" type="submit">Save</button>
-              <button class="log-row-action" type="button" @click="cancelEdit">Cancel</button>
+              <button class="log-row-action" type="submit">{{ t("diaperLog.save") }}</button>
+              <button class="log-row-action" type="button" @click="cancelEdit">
+                {{ t("diaperLog.cancel") }}
+              </button>
             </div>
           </form>
         </template>
         <template v-else>
           <span class="log-row-time">{{ timeLabel(log.logged_at) }}</span>
           <span class="log-row-flags">
-            <span v-if="log.peed">Peed</span>
-            <span v-if="log.pooped">Pooped</span>
+            <span v-if="log.peed">{{ t("diaperLog.peed") }}</span>
+            <span v-if="log.pooped">{{ t("diaperLog.pooped") }}</span>
           </span>
           <button class="log-row-action" type="button" :disabled="log.id < 0" @click="startEdit(log)">
-            Edit
+            {{ t("diaperLog.edit") }}
           </button>
           <button
             class="log-row-action log-row-delete"
@@ -266,18 +270,18 @@ async function onDelete(log: DiaperLog) {
             :disabled="log.id < 0"
             @click="onDelete(log)"
           >
-            Delete
+            {{ t("diaperLog.delete") }}
           </button>
         </template>
       </div>
     </div>
 
     <div v-if="toast" class="toast">
-      Diaper logged
-      <button type="button" @click="onUndo">Undo</button>
+      {{ t("diaperLog.toastLogged") }}
+      <button type="button" @click="onUndo">{{ t("diaperLog.undo") }}</button>
     </div>
 
-    <router-link class="helper-link" to="/">Back home</router-link>
+    <router-link class="helper-link" to="/">{{ t("diaperLog.backHome") }}</router-link>
   </div>
 </template>
 

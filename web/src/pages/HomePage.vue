@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 
 const auth = useAuthStore();
 const router = useRouter();
+const { t } = useI18n();
 
 // The session is cleared either way (see auth.logout's `finally`), but
 // Vue Router only re-runs its guards on an actual navigation attempt, not
@@ -18,13 +20,10 @@ async function onLogout() {
 <template>
   <div class="home">
     <div class="home-card">
-      <h1 class="heading glow">Welcome, {{ auth.user?.email }}</h1>
-      <p class="helper-text">
-        Bottle and breastfeeding logging are coming in the next steps — diaper changes are
-        ready now.
-      </p>
-      <router-link class="btn-primary" to="/diapers">Go to diaper log</router-link>
-      <button class="helper-link" type="button" @click="onLogout">Log out</button>
+      <h1 class="heading glow">{{ t("home.welcome", { email: auth.user?.email }) }}</h1>
+      <p class="helper-text">{{ t("home.helper") }}</p>
+      <router-link class="btn-primary" to="/diapers">{{ t("home.goToDiaperLog") }}</router-link>
+      <button class="helper-link" type="button" @click="onLogout">{{ t("home.logout") }}</button>
     </div>
   </div>
 </template>

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useBabiesStore } from "@/stores/babies";
 
 const babies = useBabiesStore();
 const router = useRouter();
+const { t } = useI18n();
 
 function selectBaby(id: number) {
   babies.setActiveBaby(id);
@@ -22,7 +24,7 @@ function goToBabies() {
       type="button"
       @click="goToBabies"
     >
-      + Add your first baby
+      {{ t("babies.addFirstBaby") }}
     </button>
 
     <template v-else>
@@ -39,7 +41,12 @@ function goToBabies() {
         {{ baby.name.charAt(0).toUpperCase() }}
       </button>
 
-      <button class="baby-avatar baby-avatar-add" type="button" title="Add a baby" @click="goToBabies">
+      <button
+        class="baby-avatar baby-avatar-add"
+        type="button"
+        :title="t('babies.addBabyTitle')"
+        @click="goToBabies"
+      >
         +
       </button>
     </template>

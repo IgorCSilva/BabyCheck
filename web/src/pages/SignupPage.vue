@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useAuthStore, ApiError } from "@/stores/auth";
+import { translateApiError, translateFieldErrors } from "@/i18n";
 import AuthCard from "@/components/AuthCard.vue";
 
 const auth = useAuthStore();
 const router = useRouter();
+const { t } = useI18n();
 
 const form = reactive({ email: "", password: "", passwordConfirmation: "" });
 const submitting = ref(false);
@@ -22,10 +25,10 @@ async function onSubmit() {
     router.push("/");
   } catch (error) {
     if (error instanceof ApiError) {
-      errorMessage.value = Object.keys(error.fieldErrors).length ? "" : error.message;
-      fieldErrors.value = error.fieldErrors;
+      errorMessage.value = Object.keys(error.fieldErrors).length ? "" : translateApiError(error);
+      fieldErrors.value = translateFieldErrors(error.fieldErrors);
     } else {
-      errorMessage.value = "something went wrong";
+      errorMessage.value = t("auth.genericError");
     }
   } finally {
     submitting.value = false;
@@ -34,18 +37,18 @@ async function onSubmit() {
 </script>
 
 <template>
-  <AuthCard title="Create your account">
+  <AuthCard :title="t('auth.signup.title')">
     <form @submit.prevent="onSubmit">
       <p v-if="errorMessage" class="form-error">{{ errorMessage }}</p>
 
       <div class="field">
-        <label for="email">Email</label>
+        <label for="email">{{ t("auth.signup.email") }}</label>
         <input id="email" v-model="form.email" type="email" autocomplete="email" required />
         <p v-if="fieldErrors.email" class="field-error">{{ fieldErrors.email.join(", ") }}</p>
       </div>
 
       <div class="field">
-        <label for="password">Password</label>
+        <label for="password">{{ t("auth.signup.password") }}</label>
         <input
           id="password"
           v-model="form.password"
@@ -57,7 +60,7 @@ async function onSubmit() {
       </div>
 
       <div class="field">
-        <label for="password_confirmation">Confirm password</label>
+        <label for="password_confirmation">{{ t("auth.signup.confirmPassword") }}</label>
         <input
           id="password_confirmation"
           v-model="form.passwordConfirmation"
@@ -71,12 +74,13 @@ async function onSubmit() {
       </div>
 
       <button class="btn-primary" type="submit" :disabled="submitting">
-        {{ submitting ? "Creating account…" : "Create account" }}
+        {{ submitting ? t("auth.signup.submitting") : t("auth.signup.submit") }}
       </button>
     </form>
 
     <p class="helper-text">
-      Already have an account? <router-link to="/login">Log in</router-link>
+      {{ t("auth.signup.haveAccount") }}
+      <router-link to="/login">{{ t("auth.signup.logIn") }}</router-link>
     </p>
   </AuthCard>
 </template>

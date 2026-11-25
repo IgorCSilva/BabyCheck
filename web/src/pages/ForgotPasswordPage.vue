@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/stores/auth";
 import AuthCard from "@/components/AuthCard.vue";
 
 const auth = useAuthStore();
+const { t } = useI18n();
 
 const email = ref("");
 const submitting = ref(false);
@@ -25,24 +27,24 @@ async function onSubmit() {
 </script>
 
 <template>
-  <AuthCard title="Reset your password">
+  <AuthCard :title="t('auth.forgotPassword.title')">
     <p v-if="submitted" class="form-success">
-      If an account exists for that email, we've sent instructions to reset your password.
+      {{ t("auth.forgotPassword.success") }}
     </p>
 
     <form v-else @submit.prevent="onSubmit">
       <div class="field">
-        <label for="email">Email</label>
+        <label for="email">{{ t("auth.forgotPassword.email") }}</label>
         <input id="email" v-model="email" type="email" autocomplete="email" required />
       </div>
 
       <button class="btn-primary" type="submit" :disabled="submitting">
-        {{ submitting ? "Sending…" : "Send reset link" }}
+        {{ submitting ? t("auth.forgotPassword.submitting") : t("auth.forgotPassword.submit") }}
       </button>
     </form>
 
     <p class="helper-text">
-      <router-link to="/login">Back to log in</router-link>
+      <router-link to="/login">{{ t("auth.forgotPassword.backToLogin") }}</router-link>
     </p>
   </AuthCard>
 </template>
