@@ -63,9 +63,12 @@ if config_env() == :prod do
 
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
-  # Gigalixir's build image has no OS CA bundle, so the default `ssl: true`
-  # has nothing to validate Supabase's certificate against ("Unknown CA").
-  # castore vendors Mozilla's CA bundle as a Hex dependency instead, and the
+  # Supabase's pooler presents a certificate chain rooted at its own private
+  # CA ("Supabase Root 2021 CA"), not a publicly-trusted one — a generic CA
+  # bundle (e.g. castore's Mozilla bundle) will never validate it, hence
+  # "Unknown CA" even with verify_peer turned on. The fix is to trust that
+  # specific root directly: it's vendored at priv/cacerts (fetched from the
+  # pooler's own TLS handshake — see api/priv/cacerts/README.md). The
   # hostname check is set explicitly since Postgrex doesn't derive it from
   # the URL on its own.
   database_host = database_url |> URI.parse() |> Map.fetch!(:host) |> to_charlist()
@@ -74,7 +77,7 @@ if config_env() == :prod do
     ssl: true,
     ssl_opts: [
       verify: :verify_peer,
-      cacertfile: CAStore.file_path(),
+      cacertfile: Application.app_dir(:api, "priv/cacerts/supabase-root-2021-ca.pem"),
       server_name_indication: database_host,
       customize_hostname_check: [match_fun: :public_key.pkix_verify_hostname_match_fun(:https)]
     ],
