@@ -156,5 +156,37 @@ defmodule ApiWeb.FeedControllerTest do
 
       assert baby_id == baby.id
     end
+
+    test "includes a rolling 7-day average and gap flag per metric", %{conn: conn} do
+      user = user_fixture()
+      baby = baby_fixture(user)
+      now = DateTime.utc_now()
+
+      for hours_ago <- [72, 96, 120, 144, 160] do
+        diaper_fixture(baby, %{logged_at: DateTime.add(now, -hours_ago * 3600, :second)})
+      end
+
+      conn =
+        conn
+        |> authed_conn(user)
+        |> get(~p"/api/feed/summary")
+
+      assert %{
+               "data" => [
+                 %{
+                   "diaper_avg_per_day_7d" => diaper_avg,
+                   "diaper_long_gap" => true,
+                   "bottle_avg_per_day_7d" => bottle_avg,
+                   "bottle_long_gap" => false,
+                   "breastfeeding_avg_per_day_7d" => breastfeeding_avg,
+                   "breastfeeding_long_gap" => false
+                 }
+               ]
+             } = json_response(conn, 200)
+
+      assert diaper_avg >= 0.5
+      assert bottle_avg == 0.0
+      assert breastfeeding_avg == 0.0
+    end
   end
 end

@@ -17,6 +17,8 @@ defmodule Api.Application do
       # Start Finch, the HTTP client used by Swoosh's API-based mail adapters
       # (name must be `Swoosh.Finch` — that's what `Swoosh.ApiClient.Finch` looks up)
       {Finch, name: Swoosh.Finch},
+      # Start Oban (background jobs: rolling-average / gap-reminder computation)
+      {Oban, Application.fetch_env!(:api, Oban)},
       # Start the Endpoint (http/https)
       ApiWeb.Endpoint
       # Start a worker by calling: Api.Worker.start_link(arg)

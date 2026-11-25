@@ -21,6 +21,7 @@ defmodule Api.Feed do
   alias Api.BottleFeedings.BottleFeeding
   alias Api.BreastfeedingLogs.BreastfeedingLog
   alias Api.DiaperLogs.DiaperLog
+  alias Api.Insights
 
   def list_entries(%User{} = user, opts \\ %{}) do
     limit = Map.get(opts, :limit, 20)
@@ -44,13 +45,21 @@ defmodule Api.Feed do
     |> Map.values()
     |> Enum.sort_by(& &1.id)
     |> Enum.map(fn baby ->
+      insights = Insights.compute_for_baby(baby)
+
       %{
         baby_id: baby.id,
         baby_name: baby.name,
         baby_theme_color: baby.theme_color,
         diaper_last_logged_at: last_logged_at(DiaperLog, baby.id),
         bottle_last_logged_at: last_logged_at(BottleFeeding, baby.id),
-        breastfeeding_last_logged_at: last_logged_at(BreastfeedingLog, baby.id)
+        breastfeeding_last_logged_at: last_logged_at(BreastfeedingLog, baby.id),
+        diaper_avg_per_day_7d: insights.diaper.avg_per_day_7d,
+        bottle_avg_per_day_7d: insights.bottle.avg_per_day_7d,
+        breastfeeding_avg_per_day_7d: insights.breastfeeding.avg_per_day_7d,
+        diaper_long_gap: insights.diaper.long_gap,
+        bottle_long_gap: insights.bottle.long_gap,
+        breastfeeding_long_gap: insights.breastfeeding.long_gap
       }
     end)
   end

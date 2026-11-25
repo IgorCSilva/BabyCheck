@@ -11,12 +11,23 @@ config :api, Api.Repo,
   hostname: System.get_env("POSTGRES_HOST") || "localhost",
   database: "babycheck_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: 10
+  pool_size: 40
 
 config :api, Api.Guardian, secret_key: "test_guardian_secret_change_me_test_guardian_secret"
 
 config :api, Api.Mailer, adapter: Swoosh.Adapters.Test
 config :swoosh, :api_client, false
+
+# No cron/pruner and no real queues in test — worker logic is exercised
+# directly (see insights_test.exs), not through Oban's own scheduler.
+# The PG notifier (Erlang process groups) avoids the default Postgres
+# LISTEN/NOTIFY notifier, which opens its own connection outside the Ecto
+# Sandbox pool and exhausts it under async tests.
+config :api, Oban,
+  testing: :manual,
+  notifier: Oban.Notifiers.PG,
+  plugins: false,
+  queues: false
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.

@@ -1,0 +1,3 @@
+# Gigalixir: per-checkout override, never committed. Deliberately this one
+# file and not the whole .gigalixir/ directory, which holds committed files.
+.gigalixir/settings.local.yaml
