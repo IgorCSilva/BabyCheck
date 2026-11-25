@@ -123,7 +123,7 @@ const ptBR: MessageSchema = {
     custom: "Personalizado",
     to: "até",
     quickLog: "Registrar mamadeira",
-    quickLogHint: "{water}ml · {formula}g",
+    quickLogDefaults: "O registro rápido usa {water}ml · {formula}g por padrão",
     empty: "Nenhuma mamadeira neste período ainda.",
     amountSummary: "{water}ml · {formula}g",
     water: "Água (ml)",

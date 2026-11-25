@@ -120,7 +120,7 @@ export interface MessageSchema {
     custom: string;
     to: string;
     quickLog: string;
-    quickLogHint: string;
+    quickLogDefaults: string;
     empty: string;
     amountSummary: string;
     water: string;
@@ -307,7 +307,7 @@ const en: MessageSchema = {
     custom: "Custom",
     to: "to",
     quickLog: "Log bottle feeding",
-    quickLogHint: "{water}ml · {formula}g",
+    quickLogDefaults: "Quick-log defaults to {water}ml · {formula}g",
     empty: "No bottle feedings in this range yet.",
     amountSummary: "{water}ml · {formula}g",
     water: "Water (ml)",

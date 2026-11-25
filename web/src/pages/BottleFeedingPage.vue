@@ -24,12 +24,6 @@ const editLoggedAt = ref("");
 const editWaterMl = ref(DEFAULT_WATER_ML);
 const editFormulaG = ref(DEFAULT_FORMULA_G);
 
-const toast = ref<{ tempId: number; promise: Promise<BottleFeeding> } | null>(null);
-let toastTimeout: ReturnType<typeof setTimeout> | null = null;
-
-const glowing = ref(false);
-let glowTimeout: ReturnType<typeof setTimeout> | null = null;
-
 function toDateInputValue(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -116,43 +110,6 @@ const groupedFeedings = computed(() => {
   return groups;
 });
 
-function pulseGlow() {
-  glowing.value = false;
-  requestAnimationFrame(() => {
-    glowing.value = true;
-    if (glowTimeout) clearTimeout(glowTimeout);
-    glowTimeout = setTimeout(() => (glowing.value = false), 700);
-  });
-}
-
-async function onQuickLog() {
-  if (!babies.activeBaby) return;
-
-  pulseGlow();
-  const entry = bottleFeedings.quickLog(babies.activeBaby.id);
-  toast.value = entry;
-  if (toastTimeout) clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(() => {
-    if (toast.value?.tempId === entry.tempId) toast.value = null;
-  }, 5000);
-
-  entry.promise.catch(() => {});
-}
-
-async function onUndo() {
-  const entry = toast.value;
-  if (!entry) return;
-  toast.value = null;
-  if (toastTimeout) clearTimeout(toastTimeout);
-
-  try {
-    const feeding = await entry.promise;
-    await bottleFeedings.deleteFeeding(feeding.id);
-  } catch {
-    // The create itself failed — the optimistic row was already rolled back.
-  }
-}
-
 function toLocalInputValue(iso: string): string {
   const date = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -208,6 +165,10 @@ async function onDelete(feeding: BottleFeeding) {
         <span>{{ totalWaterMl }}ml {{ t("bottleFeeding.totalWater") }}</span>
         <span>{{ totalFormulaG }}g {{ t("bottleFeeding.totalFormula") }}</span>
       </div>
+
+      <p class="quick-log-defaults">
+        {{ t("bottleFeeding.quickLogDefaults", { water: DEFAULT_WATER_ML, formula: DEFAULT_FORMULA_G }) }}
+      </p>
 
       <div class="preset-tabs">
         <button
@@ -317,27 +278,7 @@ async function onDelete(feeding: BottleFeeding) {
       </div>
     </div>
 
-    <div v-if="toast" class="toast">
-      {{ t("bottleFeeding.toastLogged") }}
-      <button type="button" @click="onUndo">{{ t("bottleFeeding.undo") }}</button>
-    </div>
-
     <router-link class="helper-link" to="/">{{ t("bottleFeeding.backHome") }}</router-link>
-
-    <div class="quick-log-bar">
-      <button
-        class="quick-log-btn"
-        :class="{ glow: glowing }"
-        :style="{ '--baby-color': babies.activeBaby?.theme_color }"
-        type="button"
-        @click="onQuickLog"
-      >
-        {{ t("bottleFeeding.quickLog") }}
-        <span class="quick-log-hint">
-          {{ t("bottleFeeding.quickLogHint", { water: DEFAULT_WATER_ML, formula: DEFAULT_FORMULA_G }) }}
-        </span>
-      </button>
-    </div>
   </div>
 </template>
 
@@ -348,9 +289,9 @@ async function onDelete(feeding: BottleFeeding) {
   max-width: 480px;
   margin: 0 auto;
   /* Extra bottom padding keeps the last list row (and "Back home") clear of
-     the fixed quick-log bar docked at the bottom of the viewport. */
+     the global quick-log bar docked at the bottom of the viewport. */
   padding: var(--space-3) var(--space-2)
-    calc(72px + var(--space-4) + env(safe-area-inset-bottom, 0px));
+    calc(56px + var(--space-4) + env(safe-area-inset-bottom, 0px));
 }
 
 .range-header {
@@ -381,6 +322,12 @@ async function onDelete(feeding: BottleFeeding) {
   color: var(--color-ink-secondary);
   font-size: 0.8125rem;
   margin-bottom: var(--space-2);
+}
+
+.quick-log-defaults {
+  color: var(--color-ink-secondary);
+  font-size: 0.75rem;
+  margin: 0 0 var(--space-2);
 }
 
 .preset-tabs {
@@ -420,59 +367,6 @@ async function onDelete(feeding: BottleFeeding) {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 6px 8px;
-}
-
-/* Docked to the bottom edge, in the thumb-reachable zone on mobile, so
-   logging never requires reaching up the screen. */
-.quick-log-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 5;
-  display: flex;
-  justify-content: center;
-  padding: var(--space-2) var(--space-2) calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(to top, var(--color-bg) 65%, transparent);
-}
-
-.quick-log-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  width: 100%;
-  max-width: 480px;
-  min-height: 56px;
-  border: none;
-  border-radius: var(--radius-pill);
-  background: var(--color-bottle);
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 1rem;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  position: relative;
-}
-
-.quick-log-hint {
-  font-weight: 400;
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.quick-log-btn.glow::before {
-  content: "";
-  position: absolute;
-  inset: -14px;
-  border-radius: inherit;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--baby-color, var(--color-bottle)) 50%, transparent) 0%,
-    transparent 70%
-  );
-  z-index: -1;
 }
 
 .empty-state {
@@ -584,31 +478,5 @@ async function onDelete(feeding: BottleFeeding) {
   display: flex;
   gap: 6px;
   margin-left: auto;
-}
-
-.toast {
-  position: fixed;
-  left: 50%;
-  /* Sits above the fixed quick-log bar instead of being covered by it. */
-  bottom: calc(72px + var(--space-3) * 2 + env(safe-area-inset-bottom, 0px));
-  transform: translateX(-50%);
-  z-index: 6;
-  background: var(--color-ink);
-  color: #ffffff;
-  border-radius: var(--radius-pill);
-  padding: 10px 18px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.875rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-}
-
-.toast button {
-  border: none;
-  background: none;
-  color: var(--color-bottle);
-  font-weight: 700;
-  cursor: pointer;
 }
 </style>

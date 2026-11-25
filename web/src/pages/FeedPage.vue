@@ -205,6 +205,7 @@ function entryKey(entry: FeedEntry): string {
   font-size: 0.75rem;
   color: var(--color-ink-secondary);
   position: relative;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--baby-color, var(--color-accent)) 20%, transparent);
 }
 
 .chip-diaper {

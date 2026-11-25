@@ -56,16 +56,64 @@ describe("charts store", () => {
     expect(charts.loading).toBe(false);
   });
 
-  it("reset clears the chart data", () => {
+  it("refresh re-fetches using the most recently requested baby and range", async () => {
+    const charts = useChartsStore();
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse(200, {
+        data: {
+          diaper: [{ date: "2026-11-20", count: 1 }],
+          bottle: [],
+          breastfeeding: [],
+        },
+      }),
+    );
+
+    await charts.fetchCharts(1, {
+      from: new Date("2026-11-20T00:00:00Z"),
+      to: new Date("2026-11-20T23:59:59Z"),
+    });
+
+    fetchSpy.mockResolvedValue(
+      jsonResponse(200, {
+        data: {
+          diaper: [{ date: "2026-11-20", count: 2 }],
+          bottle: [],
+          breastfeeding: [],
+        },
+      }),
+    );
+
+    await charts.refresh();
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    const secondUrl = fetchSpy.mock.calls[1][0] as string;
+    expect(secondUrl).toContain("/api/babies/1/charts?");
+    expect(charts.data.diaper).toEqual([{ date: "2026-11-20", count: 2 }]);
+  });
+
+  it("refresh is a no-op before any chart has ever been fetched", async () => {
+    const charts = useChartsStore();
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await charts.refresh();
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("reset clears the chart data and forgets the last-requested range", () => {
     const charts = useChartsStore();
     charts.data = {
       diaper: [{ date: "2026-11-20", count: 2 }],
       bottle: [],
       breastfeeding: [],
     };
+    charts.lastBabyId = 1;
+    charts.lastRange = { from: new Date(), to: new Date() };
 
     charts.reset();
 
     expect(charts.data).toEqual({ diaper: [], bottle: [], breastfeeding: [] });
+    expect(charts.lastBabyId).toBeNull();
+    expect(charts.lastRange).toBeNull();
   });
 });

@@ -9,6 +9,7 @@ import { useFeedStore } from "@/stores/feed";
 import { useChartsStore } from "@/stores/charts";
 import TopBar from "@/components/TopBar.vue";
 import PageNav from "@/components/PageNav.vue";
+import QuickLogBar from "@/components/QuickLogBar.vue";
 
 const auth = useAuthStore();
 const babies = useBabiesStore();
@@ -45,6 +46,7 @@ watch(
     <main class="app-main">
       <router-view />
     </main>
+    <QuickLogBar v-if="auth.isAuthenticated" />
   </div>
 </template>
 
