@@ -1,0 +1,176 @@
+:root {
+  --color-bg: #fff9f4;
+  --color-surface: #ffffff;
+  --color-border: #f0e4dc;
+  --color-ink: #3a3433;
+  --color-ink-secondary: #8a8078;
+  --color-accent: #7fb7be;
+  --color-accent-contrast: #ffffff;
+  --color-success: #6fae8c;
+  --color-danger: #e2765a;
+
+  --font-heading: "Nunito", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  --radius-card: 18px;
+  --radius-pill: 999px;
+
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+.heading {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+a {
+  color: var(--color-accent);
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+.field {
+  margin-bottom: var(--space-2);
+}
+
+.field label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: var(--space-1);
+}
+
+.field input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.field input:focus {
+  border-color: var(--color-accent);
+}
+
+.field-error {
+  color: var(--color-danger);
+  font-size: 0.8125rem;
+  margin-top: 4px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--space-3);
+  font-size: 0.9rem;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-accent);
+}
+
+.btn-primary {
+  width: 100%;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 12px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.helper-link {
+  display: block;
+  text-align: center;
+  margin-top: var(--space-2);
+  font-size: 0.875rem;
+  color: var(--color-accent);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.helper-text {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--color-ink-secondary);
+  margin-top: var(--space-2);
+}
+
+.form-error {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  margin-bottom: var(--space-2);
+}
+
+.form-success {
+  background: color-mix(in srgb, var(--color-success) 14%, transparent);
+  color: var(--color-success);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  margin-bottom: var(--space-2);
+}
+
+/* The "Nightlight Glow" motif: a soft radial wash in the active accent
+   color behind whatever the parent just touched — a counter, a button
+   right after a tap, an avatar. Here it's the default teal accent, since
+   no per-baby theme color exists until Step 2. */
+.glow {
+  position: relative;
+}
+
+.glow::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border-radius: inherit;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-accent) 35%, transparent) 0%, transparent 70%);
+  z-index: -1;
+}
