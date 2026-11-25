@@ -24,6 +24,7 @@ defmodule ApiWeb.Router do
       pipe_through :authenticated
 
       get "/me", ProfileController, :show
+      resources "/babies", BabyController, only: [:index, :create, :update, :delete]
     end
   end
 end

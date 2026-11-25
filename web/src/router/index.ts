@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import { useBabiesStore } from "@/stores/babies";
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -8,6 +9,12 @@ export const router = createRouter({
       path: "/",
       name: "home",
       component: () => import("@/pages/HomePage.vue"),
+      meta: { requiresAuth: true, requiresBaby: true },
+    },
+    {
+      path: "/babies",
+      name: "babies",
+      component: () => import("@/pages/BabiesPage.vue"),
       meta: { requiresAuth: true },
     },
     {
@@ -42,7 +49,7 @@ export const router = createRouter({
   ],
 });
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore();
 
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
@@ -51,5 +58,14 @@ router.beforeEach((to) => {
 
   if (to.meta.guestOnly && auth.isAuthenticated) {
     return { name: "home" };
+  }
+
+  if (to.meta.requiresAuth && auth.isAuthenticated) {
+    const babies = useBabiesStore();
+    await babies.ensureLoaded();
+
+    if (to.meta.requiresBaby && to.name !== "babies" && babies.babies.length === 0) {
+      return { name: "babies" };
+    }
   }
 });

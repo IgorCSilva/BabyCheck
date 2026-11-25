@@ -20,8 +20,8 @@ async function onLogout() {
     <div class="home-card">
       <h1 class="heading glow">Welcome, {{ auth.user?.email }}</h1>
       <p class="helper-text">
-        Baby profiles and activity logging are coming in the next steps — for now, this just
-        proves you're signed in.
+        Diaper, bottle, and breastfeeding logging are coming in the next steps — for now, this
+        just proves you're signed in and your baby profiles are set up.
       </p>
       <button class="btn-primary" @click="onLogout">Log out</button>
     </div>
