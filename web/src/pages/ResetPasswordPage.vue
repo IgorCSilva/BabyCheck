@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useAuthStore, ApiError } from "@/stores/auth";
+import { translateApiError, translateFieldErrors } from "@/i18n";
 import AuthCard from "@/components/AuthCard.vue";
 
 const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 
 const token = route.params.token as string;
 const form = reactive({ password: "", passwordConfirmation: "" });
@@ -24,10 +27,10 @@ async function onSubmit() {
     router.push("/");
   } catch (error) {
     if (error instanceof ApiError) {
-      errorMessage.value = Object.keys(error.fieldErrors).length ? "" : error.message;
-      fieldErrors.value = error.fieldErrors;
+      errorMessage.value = Object.keys(error.fieldErrors).length ? "" : translateApiError(error);
+      fieldErrors.value = translateFieldErrors(error.fieldErrors);
     } else {
-      errorMessage.value = "something went wrong";
+      errorMessage.value = t("auth.genericError");
     }
   } finally {
     submitting.value = false;
@@ -36,15 +39,15 @@ async function onSubmit() {
 </script>
 
 <template>
-  <AuthCard title="Choose a new password">
+  <AuthCard :title="t('auth.resetPassword.title')">
     <form @submit.prevent="onSubmit">
       <p v-if="errorMessage" class="form-error">
         {{ errorMessage }}
-        <router-link to="/forgot-password">Request a new link</router-link>
+        <router-link to="/forgot-password">{{ t("auth.resetPassword.requestNewLink") }}</router-link>
       </p>
 
       <div class="field">
-        <label for="password">New password</label>
+        <label for="password">{{ t("auth.resetPassword.newPassword") }}</label>
         <input
           id="password"
           v-model="form.password"
@@ -56,7 +59,7 @@ async function onSubmit() {
       </div>
 
       <div class="field">
-        <label for="password_confirmation">Confirm new password</label>
+        <label for="password_confirmation">{{ t("auth.resetPassword.confirmNewPassword") }}</label>
         <input
           id="password_confirmation"
           v-model="form.passwordConfirmation"
@@ -70,7 +73,7 @@ async function onSubmit() {
       </div>
 
       <button class="btn-primary" type="submit" :disabled="submitting">
-        {{ submitting ? "Saving…" : "Save new password" }}
+        {{ submitting ? t("auth.resetPassword.submitting") : t("auth.resetPassword.submit") }}
       </button>
     </form>
   </AuthCard>

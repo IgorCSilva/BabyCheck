@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
+
 defineProps<{ title: string }>();
 </script>
 
 <template>
   <div class="auth-screen">
+    <LanguageSwitcher class="auth-language-switcher" />
     <div class="auth-card">
       <h1 class="heading">{{ title }}</h1>
       <slot />
@@ -13,11 +16,18 @@ defineProps<{ title: string }>();
 
 <style scoped>
 .auth-screen {
-  min-height: 100vh;
+  position: relative;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-2);
+}
+
+.auth-language-switcher {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
 }
 
 .auth-card {

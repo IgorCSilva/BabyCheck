@@ -4,6 +4,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { createRouter, createMemoryHistory } from "vue-router";
 import LoginPage from "./LoginPage.vue";
 import { useAuthStore } from "@/stores/auth";
+import { i18n } from "@/i18n";
 
 function jsonResponse(status: number, body: unknown) {
   return new Response(JSON.stringify(body), { status });
@@ -23,7 +24,7 @@ async function mountLoginPage() {
   router.push("/login");
   await router.isReady();
 
-  return mount(LoginPage, { global: { plugins: [router] } });
+  return mount(LoginPage, { global: { plugins: [router, i18n] } });
 }
 
 describe("LoginPage", () => {
