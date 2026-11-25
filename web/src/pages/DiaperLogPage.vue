@@ -226,16 +226,6 @@ async function onDelete(log: DiaperLog) {
       </div>
     </div>
 
-    <button
-      class="quick-log-btn"
-      :class="{ glow: glowing }"
-      :style="{ '--baby-color': babies.activeBaby?.theme_color }"
-      type="button"
-      @click="onQuickLog"
-    >
-      {{ t("diaperLog.quickLog") }}
-    </button>
-
     <div v-if="groupedLogs.length === 0" class="empty-state">{{ t("diaperLog.empty") }}</div>
 
     <div v-for="group in groupedLogs" :key="group.label" class="day-group">
@@ -282,6 +272,18 @@ async function onDelete(log: DiaperLog) {
     </div>
 
     <router-link class="helper-link" to="/">{{ t("diaperLog.backHome") }}</router-link>
+
+    <div class="quick-log-bar">
+      <button
+        class="quick-log-btn"
+        :class="{ glow: glowing }"
+        :style="{ '--baby-color': babies.activeBaby?.theme_color }"
+        type="button"
+        @click="onQuickLog"
+      >
+        {{ t("diaperLog.quickLog") }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -291,7 +293,10 @@ async function onDelete(log: DiaperLog) {
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
-  padding: var(--space-3) var(--space-2) calc(var(--space-4) * 2);
+  /* Extra bottom padding keeps the last list row (and "Back home") clear of
+     the fixed quick-log bar docked at the bottom of the viewport. */
+  padding: var(--space-3) var(--space-2)
+    calc(56px + var(--space-4) + env(safe-area-inset-bottom, 0px));
 }
 
 .range-header {
@@ -354,9 +359,24 @@ async function onDelete(log: DiaperLog) {
   padding: 6px 8px;
 }
 
+/* Docked to the bottom edge, in the thumb-reachable zone on mobile, so
+   logging never requires reaching up the screen. */
+.quick-log-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-2) var(--space-2) calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, var(--color-bg) 65%, transparent);
+}
+
 .quick-log-btn {
   display: block;
   width: 100%;
+  max-width: 480px;
   min-height: 56px;
   border: none;
   border-radius: var(--radius-pill);
@@ -365,7 +385,7 @@ async function onDelete(log: DiaperLog) {
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
-  margin-bottom: var(--space-3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   position: relative;
 }
 
@@ -475,8 +495,11 @@ async function onDelete(log: DiaperLog) {
 .toast {
   position: fixed;
   left: 50%;
-  bottom: var(--space-3);
+  /* Sits above the fixed quick-log bar (56px button + its own padding)
+     instead of being covered by it. */
+  bottom: calc(56px + var(--space-3) * 2 + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
+  z-index: 6;
   background: var(--color-ink);
   color: #ffffff;
   border-radius: var(--radius-pill);
