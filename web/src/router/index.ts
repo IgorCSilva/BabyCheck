@@ -8,7 +8,7 @@ export const router = createRouter({
     {
       path: "/",
       name: "home",
-      component: () => import("@/pages/HomePage.vue"),
+      component: () => import("@/pages/FeedPage.vue"),
       meta: { requiresAuth: true, requiresBaby: true },
     },
     {
@@ -21,6 +21,18 @@ export const router = createRouter({
       path: "/diapers",
       name: "diapers",
       component: () => import("@/pages/DiaperLogPage.vue"),
+      meta: { requiresAuth: true, requiresBaby: true },
+    },
+    {
+      path: "/bottle-feedings",
+      name: "bottle-feedings",
+      component: () => import("@/pages/BottleFeedingPage.vue"),
+      meta: { requiresAuth: true, requiresBaby: true },
+    },
+    {
+      path: "/breastfeeding",
+      name: "breastfeeding",
+      component: () => import("@/pages/BreastfeedingLogPage.vue"),
       meta: { requiresAuth: true, requiresBaby: true },
     },
     {

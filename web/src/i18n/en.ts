@@ -1,18 +1,24 @@
 export interface MessageSchema {
   nav: {
+    feed: string;
     diaperLog: string;
+    bottleFeeding: string;
+    breastfeeding: string;
     manageBabies: string;
+    logout: string;
   };
   language: {
     label: string;
     en: string;
     ptBR: string;
   };
-  home: {
-    welcome: string;
-    helper: string;
-    goToDiaperLog: string;
-    logout: string;
+  feed: {
+    heading: string;
+    noLogsYet: string;
+    empty: string;
+    justNow: string;
+    ago: string;
+    loadingMore: string;
   };
   auth: {
     genericError: string;
@@ -93,6 +99,50 @@ export interface MessageSchema {
     undo: string;
     backHome: string;
   };
+  bottleFeeding: {
+    total: string;
+    totalWater: string;
+    totalFormula: string;
+    today: string;
+    yesterday: string;
+    sevenDays: string;
+    thirtyDays: string;
+    custom: string;
+    to: string;
+    quickLog: string;
+    quickLogHint: string;
+    empty: string;
+    amountSummary: string;
+    water: string;
+    formula: string;
+    save: string;
+    cancel: string;
+    edit: string;
+    delete: string;
+    confirmDelete: string;
+    toastLogged: string;
+    undo: string;
+    backHome: string;
+  };
+  breastfeedingLog: {
+    total: string;
+    today: string;
+    yesterday: string;
+    sevenDays: string;
+    thirtyDays: string;
+    custom: string;
+    to: string;
+    quickLog: string;
+    empty: string;
+    save: string;
+    cancel: string;
+    edit: string;
+    delete: string;
+    confirmDelete: string;
+    toastLogged: string;
+    undo: string;
+    backHome: string;
+  };
   serverErrors: {
     codes: {
       invalid_credentials: string;
@@ -126,20 +176,25 @@ export interface ServerErrorMessages {
 
 const en: MessageSchema = {
   nav: {
+    feed: "Home",
     diaperLog: "Diaper log",
+    bottleFeeding: "Bottle feeding",
+    breastfeeding: "Breastfeeding",
     manageBabies: "Manage babies",
+    logout: "Log out",
   },
   language: {
     label: "Language",
     en: "EN",
     ptBR: "PT",
   },
-  home: {
-    welcome: "Welcome, {email}",
-    helper:
-      "Bottle and breastfeeding logging are coming in the next steps — diaper changes are ready now.",
-    goToDiaperLog: "Go to diaper log",
-    logout: "Log out",
+  feed: {
+    heading: "Recent activity",
+    noLogsYet: "No logs yet",
+    empty: "No activity yet. Start logging to see it here.",
+    justNow: "Just now",
+    ago: "ago",
+    loadingMore: "Loading more…",
   },
   auth: {
     genericError: "something went wrong",
@@ -218,6 +273,50 @@ const en: MessageSchema = {
     delete: "Delete",
     confirmDelete: "Delete this diaper change? This can't be undone.",
     toastLogged: "Diaper logged",
+    undo: "Undo",
+    backHome: "Back home",
+  },
+  bottleFeeding: {
+    total: "bottle feedings",
+    totalWater: "water",
+    totalFormula: "formula",
+    today: "Today",
+    yesterday: "Yesterday",
+    sevenDays: "7 days",
+    thirtyDays: "30 days",
+    custom: "Custom",
+    to: "to",
+    quickLog: "Log bottle feeding",
+    quickLogHint: "{water}ml · {formula}g",
+    empty: "No bottle feedings in this range yet.",
+    amountSummary: "{water}ml · {formula}g",
+    water: "Water (ml)",
+    formula: "Formula (g)",
+    save: "Save",
+    cancel: "Cancel",
+    edit: "Edit",
+    delete: "Delete",
+    confirmDelete: "Delete this bottle feeding? This can't be undone.",
+    toastLogged: "Bottle feeding logged",
+    undo: "Undo",
+    backHome: "Back home",
+  },
+  breastfeedingLog: {
+    total: "breastfeeding sessions",
+    today: "Today",
+    yesterday: "Yesterday",
+    sevenDays: "7 days",
+    thirtyDays: "30 days",
+    custom: "Custom",
+    to: "to",
+    quickLog: "Log breastfeeding",
+    empty: "No breastfeeding sessions in this range yet.",
+    save: "Save",
+    cancel: "Cancel",
+    edit: "Edit",
+    delete: "Delete",
+    confirmDelete: "Delete this breastfeeding session? This can't be undone.",
+    toastLogged: "Breastfeeding logged",
     undo: "Undo",
     backHome: "Back home",
   },

@@ -3,12 +3,18 @@ import { watch } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useBabiesStore } from "@/stores/babies";
 import { useDiaperLogsStore } from "@/stores/diaperLogs";
+import { useBottleFeedingsStore } from "@/stores/bottleFeedings";
+import { useBreastfeedingLogsStore } from "@/stores/breastfeedingLogs";
+import { useFeedStore } from "@/stores/feed";
 import TopBar from "@/components/TopBar.vue";
 import PageNav from "@/components/PageNav.vue";
 
 const auth = useAuthStore();
 const babies = useBabiesStore();
 const diaperLogs = useDiaperLogsStore();
+const bottleFeedings = useBottleFeedingsStore();
+const breastfeedingLogs = useBreastfeedingLogsStore();
+const feed = useFeedStore();
 
 // Centralized here rather than in every place that can trigger a
 // logout, so a second account signing in on the same browser never
@@ -19,6 +25,9 @@ watch(
     if (!isAuthenticated) {
       babies.reset();
       diaperLogs.reset();
+      bottleFeedings.reset();
+      breastfeedingLogs.reset();
+      feed.reset();
     }
   },
 );
