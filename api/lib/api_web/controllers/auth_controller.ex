@@ -94,6 +94,7 @@ defmodule ApiWeb.AuthController do
       http_only: true,
       same_site: same_site_policy(),
       secure: secure_cookies?(),
+      partitioned: secure_cookies?(),
       max_age: max_age,
       path: "/api/auth"
     )
@@ -103,7 +104,8 @@ defmodule ApiWeb.AuthController do
     delete_resp_cookie(conn, @refresh_cookie,
       path: "/api/auth",
       same_site: same_site_policy(),
-      secure: secure_cookies?()
+      secure: secure_cookies?(),
+      partitioned: secure_cookies?()
     )
   end
 
