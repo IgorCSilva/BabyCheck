@@ -87,4 +87,41 @@ describe("auth store", () => {
     expect(auth.ready).toBe(true);
     expect(auth.isAuthenticated).toBe(false);
   });
+
+  it("refresh dedupes concurrent callers into a single request", async () => {
+    const auth = useAuthStore();
+    let resolveFetch: (value: Response) => void = () => {};
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockReturnValue(
+      new Promise((resolve) => {
+        resolveFetch = resolve;
+      }) as Promise<Response>,
+    );
+
+    const first = auth.refresh();
+    const second = auth.refresh();
+
+    resolveFetch(
+      jsonResponse(200, { data: { user: { id: 1, email: "a@example.com" }, access_token: "tok" } }),
+    );
+    await Promise.all([first, second]);
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(auth.accessToken).toBe("tok");
+  });
+
+  it("a later refresh call starts a fresh request once the in-flight one settles", async () => {
+    const auth = useAuthStore();
+    // A fresh Response per call: mockResolvedValue would hand back the same
+    // instance both times, and a Response body can only be read once.
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(() =>
+      Promise.resolve(
+        jsonResponse(200, { data: { user: { id: 1, email: "a@example.com" }, access_token: "tok" } }),
+      ),
+    );
+
+    await auth.refresh();
+    await auth.refresh();
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
 });

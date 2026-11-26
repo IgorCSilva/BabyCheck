@@ -26,6 +26,15 @@ export class ApiError extends Error {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
 
+// Dedupes concurrent refresh() callers (apiRequest's 401 retry can fire from
+// several in-flight requests at once, since the 15-minute access token
+// expires for all of them together) so they share a single
+// /api/auth/refresh call instead of racing. The backend rotates the refresh
+// token on each call, so a second concurrent call would read the
+// now-stale, already-rotated-out cookie, fail, and wrongly clear the
+// session the first call just re-established.
+let refreshPromise: Promise<void> | null = null;
+
 interface AuthState {
   user: SessionUser | null;
   accessToken: string | null;
@@ -73,7 +82,19 @@ export const useAuthStore = defineStore("auth", {
       this.setSession(user, access_token);
     },
 
+    // Exchanges the HttpOnly refresh cookie for a fresh access token.
+    // Delegates to performRefresh() through the module-level dedup guard
+    // above, so overlapping callers share one in-flight request.
     async refresh() {
+      if (!refreshPromise) {
+        refreshPromise = this.performRefresh().finally(() => {
+          refreshPromise = null;
+        });
+      }
+      return refreshPromise;
+    },
+
+    async performRefresh() {
       const { user, access_token } = await this.request("/api/auth/refresh", { method: "POST" });
       this.setSession(user, access_token);
     },
