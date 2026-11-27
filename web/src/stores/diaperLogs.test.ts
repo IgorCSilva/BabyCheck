@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { useDiaperLogsStore } from "./diaperLogs";
+import { useOutboxStore } from "./outbox";
 
 function jsonResponse(status: number, body: unknown) {
   return new Response(status === 204 ? null : JSON.stringify(body), { status });
@@ -63,6 +64,77 @@ describe("diaperLogs store", () => {
     await expect(promise).rejects.toThrow();
 
     expect(diaperLogs.logs).toHaveLength(0);
+  });
+
+  it("quickLog falls back to the offline outbox on a network failure instead of rolling back", async () => {
+    const diaperLogs = useDiaperLogsStore();
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));
+
+    const { tempId } = diaperLogs.quickLog(1);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(diaperLogs.logs).toHaveLength(1);
+    const row = diaperLogs.logs.find((log) => log.id === tempId);
+    expect(row?._queued).toBe(true);
+
+    const outbox = useOutboxStore();
+    expect(outbox.entriesFor("diaper", 1).map((entry) => entry.tempId)).toContain(tempId);
+  });
+
+  it("restoreQueued re-inserts a still-queued outbox entry after a reload", () => {
+    const diaperLogs = useDiaperLogsStore();
+    const outbox = useOutboxStore();
+    outbox.entries = [
+      {
+        tempId: -123,
+        metric: "diaper",
+        baby_id: 1,
+        payload: { logged_at: "2026-11-24T10:00:00Z", peed: true, pooped: true },
+      },
+    ];
+
+    diaperLogs.restoreQueued(1);
+
+    expect(diaperLogs.logs).toHaveLength(1);
+    expect(diaperLogs.logs[0]).toMatchObject({ id: -123, baby_id: 1, _queued: true });
+  });
+
+  it("restoreQueued doesn't duplicate an entry that's already shown", () => {
+    const diaperLogs = useDiaperLogsStore();
+    diaperLogs.logs = [
+      { id: -123, baby_id: 1, logged_at: "2026-11-24T10:00:00Z", peed: true, pooped: true, _queued: true },
+    ];
+    const outbox = useOutboxStore();
+    outbox.entries = [
+      {
+        tempId: -123,
+        metric: "diaper",
+        baby_id: 1,
+        payload: { logged_at: "2026-11-24T10:00:00Z", peed: true, pooped: true },
+      },
+    ];
+
+    diaperLogs.restoreQueued(1);
+
+    expect(diaperLogs.logs).toHaveLength(1);
+  });
+
+  it("tryDiscard cancels a still-queued entry without ever hitting the network", () => {
+    const diaperLogs = useDiaperLogsStore();
+    diaperLogs.logs = [
+      { id: -123, baby_id: 1, logged_at: "2026-11-24T10:00:00Z", peed: true, pooped: true, _queued: true },
+    ];
+    const outbox = useOutboxStore();
+    outbox.entries = [{ tempId: -123, metric: "diaper", baby_id: 1, payload: {} }];
+
+    expect(diaperLogs.tryDiscard(-123)).toBe(true);
+    expect(diaperLogs.logs).toHaveLength(0);
+    expect(outbox.entries).toHaveLength(0);
+  });
+
+  it("tryDiscard returns false for an entry that's already synced", () => {
+    const diaperLogs = useDiaperLogsStore();
+    expect(diaperLogs.tryDiscard(-999)).toBe(false);
   });
 
   it("updateLog replaces the entry and keeps the list sorted by logged_at desc", async () => {

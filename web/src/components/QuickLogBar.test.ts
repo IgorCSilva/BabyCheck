@@ -173,4 +173,28 @@ describe("QuickLogBar", () => {
     const breastfeedingLogs = useBreastfeedingLogsStore();
     expect(breastfeedingLogs.logs).toHaveLength(0);
   });
+
+  it("undo cancels a still-queued offline entry without ever hitting the network", async () => {
+    const babies = useBabiesStore();
+    babies.babies = [{ id: 1, name: "Riley", theme_color: "#F5A9B8" }];
+    babies.setActiveBaby(1);
+
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockRejectedValue(new TypeError("Failed to fetch"));
+
+    const wrapper = mountBar();
+    await wrapper.find(".quick-log-btn-breastfeeding").trigger("click");
+    await flushPromises();
+
+    const breastfeedingLogs = useBreastfeedingLogsStore();
+    expect(breastfeedingLogs.logs[0]._queued).toBe(true);
+
+    const callsBeforeUndo = fetchSpy.mock.calls.length;
+    await wrapper.find(".quick-log-toast button").trigger("click");
+    await flushPromises();
+
+    expect(breastfeedingLogs.logs).toHaveLength(0);
+    expect(fetchSpy.mock.calls.length).toBe(callsBeforeUndo);
+  });
 });

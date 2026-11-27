@@ -50,10 +50,32 @@ defmodule Api.BottleFeedings do
     end
   end
 
+  # `client_request_id` lets a retried create (e.g. the offline outbox replaying a
+  # mutation whose original response never arrived) return the row that already
+  # exists instead of erroring or inserting a duplicate. Without one, a plain
+  # insert runs as before.
   def create_feeding(%Baby{} = baby, attrs) do
-    %BottleFeeding{baby_id: baby.id}
-    |> BottleFeeding.changeset(attrs)
-    |> Repo.insert()
+    changeset = BottleFeeding.changeset(%BottleFeeding{baby_id: baby.id}, attrs)
+
+    case client_request_id(attrs) do
+      nil -> Repo.insert(changeset)
+      client_request_id -> insert_idempotent(changeset, client_request_id)
+    end
+  end
+
+  defp client_request_id(attrs), do: attrs["client_request_id"] || attrs[:client_request_id]
+
+  defp insert_idempotent(changeset, client_request_id) do
+    case Repo.insert(changeset, on_conflict: :nothing, conflict_target: :client_request_id) do
+      {:ok, %BottleFeeding{id: nil}} ->
+        {:ok, Repo.get_by!(BottleFeeding, client_request_id: client_request_id)}
+
+      {:ok, feeding} ->
+        {:ok, feeding}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
 
   def update_feeding(%BottleFeeding{} = feeding, attrs) do

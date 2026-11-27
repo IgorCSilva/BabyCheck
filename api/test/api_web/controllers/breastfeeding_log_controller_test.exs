@@ -139,6 +139,23 @@ defmodule ApiWeb.BreastfeedingLogControllerTest do
 
       assert json_response(conn, 404)
     end
+
+    test "a repeated client_request_id (e.g. an offline retry) doesn't create a duplicate", %{
+      conn: conn
+    } do
+      user = user_fixture()
+      baby = baby_fixture(user)
+      body = %{"logged_at" => "2026-11-20T08:00:00Z", "client_request_id" => "temp-456"}
+
+      conn = conn |> authed_conn(user)
+      first = post(conn, ~p"/api/babies/#{baby.id}/breastfeeding_logs", body)
+      second = post(conn, ~p"/api/babies/#{baby.id}/breastfeeding_logs", body)
+
+      assert %{"data" => %{"id" => first_id}} = json_response(first, 201)
+      assert %{"data" => %{"id" => second_id}} = json_response(second, 201)
+      assert first_id == second_id
+      assert length(BreastfeedingLogs.list_logs(baby)) == 1
+    end
   end
 
   describe "PUT /api/breastfeeding_logs/:id" do

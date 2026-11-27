@@ -3,6 +3,7 @@ import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import FeedPage from "./FeedPage.vue";
 import { useBabiesStore } from "@/stores/babies";
+import { useOutboxStore } from "@/stores/outbox";
 import { i18n } from "@/i18n";
 
 function jsonResponse(status: number, body: unknown) {
@@ -112,5 +113,31 @@ describe("FeedPage insight chips", () => {
     const diaperChip = wrapper.find(".chip-diaper");
     expect(diaperChip.classes()).not.toContain("long-gap");
     expect(diaperChip.attributes("title")).toBeUndefined();
+  });
+
+  it("shows a still-queued offline entry as a dashed-border row", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((url) => {
+      if (String(url).includes("/summary")) return Promise.resolve(jsonResponse(200, { data: [baseSummary()] }));
+      return Promise.resolve(jsonResponse(200, { data: [] }));
+    });
+
+    const wrapper = mountFeedPage();
+    await flushPromises();
+    await flushPromises();
+
+    const outbox = useOutboxStore();
+    outbox.entries = [
+      {
+        tempId: -42,
+        metric: "diaper",
+        baby_id: 1,
+        payload: { logged_at: "2026-11-24T11:00:00Z", peed: true, pooped: true },
+      },
+    ];
+    await flushPromises();
+
+    const queuedRow = wrapper.find(".feed-row-queued");
+    expect(queuedRow.exists()).toBe(true);
+    expect(queuedRow.find(".feed-row-baby").text()).toBe("Riley");
   });
 });

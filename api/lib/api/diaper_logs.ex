@@ -51,10 +51,32 @@ defmodule Api.DiaperLogs do
     end
   end
 
+  # `client_request_id` lets a retried create (e.g. the offline outbox replaying a
+  # mutation whose original response never arrived) return the row that already
+  # exists instead of erroring or inserting a duplicate. Without one, a plain
+  # insert runs as before.
   def create_log(%Baby{} = baby, attrs) do
-    %DiaperLog{baby_id: baby.id}
-    |> DiaperLog.changeset(attrs)
-    |> Repo.insert()
+    changeset = DiaperLog.changeset(%DiaperLog{baby_id: baby.id}, attrs)
+
+    case client_request_id(attrs) do
+      nil -> Repo.insert(changeset)
+      client_request_id -> insert_idempotent(changeset, client_request_id)
+    end
+  end
+
+  defp client_request_id(attrs), do: attrs["client_request_id"] || attrs[:client_request_id]
+
+  defp insert_idempotent(changeset, client_request_id) do
+    case Repo.insert(changeset, on_conflict: :nothing, conflict_target: :client_request_id) do
+      {:ok, %DiaperLog{id: nil}} ->
+        {:ok, Repo.get_by!(DiaperLog, client_request_id: client_request_id)}
+
+      {:ok, log} ->
+        {:ok, log}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
 
   def update_log(%DiaperLog{} = log, attrs) do

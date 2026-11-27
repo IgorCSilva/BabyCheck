@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch } from "vue";
+import { onMounted, watch } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useBabiesStore } from "@/stores/babies";
 import { useDiaperLogsStore } from "@/stores/diaperLogs";
@@ -7,9 +7,11 @@ import { useBottleFeedingsStore } from "@/stores/bottleFeedings";
 import { useBreastfeedingLogsStore } from "@/stores/breastfeedingLogs";
 import { useFeedStore } from "@/stores/feed";
 import { useChartsStore } from "@/stores/charts";
+import { useOutboxStore } from "@/stores/outbox";
 import TopBar from "@/components/TopBar.vue";
 import PageNav from "@/components/PageNav.vue";
 import QuickLogBar from "@/components/QuickLogBar.vue";
+import OfflineBanner from "@/components/OfflineBanner.vue";
 
 const auth = useAuthStore();
 const babies = useBabiesStore();
@@ -18,6 +20,12 @@ const bottleFeedings = useBottleFeedingsStore();
 const breastfeedingLogs = useBreastfeedingLogsStore();
 const feed = useFeedStore();
 const charts = useChartsStore();
+const outbox = useOutboxStore();
+
+// Independent of auth state (harmless either way — `flush` only ever sends
+// entries for babies the current account owns) so a log queued just before
+// a session expires still gets picked up the moment it's valid again.
+onMounted(() => outbox.init());
 
 // Centralized here rather than in every place that can trigger a
 // logout, so a second account signing in on the same browser never
@@ -39,6 +47,7 @@ watch(
 
 <template>
   <div v-if="auth.ready" class="app-shell">
+    <OfflineBanner />
     <div v-if="auth.isAuthenticated" class="app-header">
       <TopBar />
       <PageNav />
