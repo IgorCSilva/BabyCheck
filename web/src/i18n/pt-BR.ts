@@ -42,6 +42,9 @@ const ptBR: MessageSchema = {
     custom: "Personalizado",
     to: "até",
     empty: "Nenhum dado neste período ainda.",
+    export: "Exportar PDF",
+    exporting: "Exportando…",
+    exportError: "Não foi possível exportar o PDF. Tente novamente.",
   },
   auth: {
     genericError: "algo deu errado",

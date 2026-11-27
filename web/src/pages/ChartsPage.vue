@@ -29,6 +29,9 @@ const babies = useBabiesStore();
 const charts = useChartsStore();
 const { t, locale } = useI18n();
 
+const exporting = ref(false);
+const exportError = ref(false);
+
 const preset = ref<Preset>("7d");
 const customFrom = ref(toDateInputValue(new Date()));
 const customTo = ref(toDateInputValue(new Date()));
@@ -80,6 +83,19 @@ watch(activeRange, reload);
 
 function selectPreset(next: Preset) {
   preset.value = next;
+}
+
+async function exportPdf() {
+  if (!babies.activeBaby || exporting.value) return;
+  exporting.value = true;
+  exportError.value = false;
+  try {
+    await charts.exportSummary(babies.activeBaby.id, activeRange.value);
+  } catch {
+    exportError.value = true;
+  } finally {
+    exporting.value = false;
+  }
 }
 
 function dayLabel(iso: string): string {
@@ -196,6 +212,11 @@ const chartOptions = {
         <span>{{ t("charts.to") }}</span>
         <input v-model="customTo" type="date" />
       </div>
+
+      <button type="button" class="export-button" :disabled="exporting" @click="exportPdf">
+        {{ exporting ? t("charts.exporting") : t("charts.export") }}
+      </button>
+      <p v-if="exportError" class="field-error">{{ t("charts.exportError") }}</p>
     </div>
 
     <div v-for="metric in METRICS" :key="metric" class="chart-card">
@@ -272,6 +293,23 @@ const chartOptions = {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 6px 8px;
+}
+
+.export-button {
+  margin-top: var(--space-2);
+  border: 1px solid var(--color-accent);
+  background: var(--color-bg);
+  color: var(--color-accent);
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.export-button:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .chart-card {

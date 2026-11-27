@@ -40,6 +40,9 @@ export interface MessageSchema {
     custom: string;
     to: string;
     empty: string;
+    export: string;
+    exporting: string;
+    exportError: string;
   };
   auth: {
     genericError: string;
@@ -237,6 +240,9 @@ const en: MessageSchema = {
     custom: "Custom",
     to: "to",
     empty: "No data in this range yet.",
+    export: "Export PDF",
+    exporting: "Exporting…",
+    exportError: "Couldn't export the PDF. Please try again.",
   },
   auth: {
     genericError: "something went wrong",
