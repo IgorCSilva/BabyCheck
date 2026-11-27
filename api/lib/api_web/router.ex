@@ -32,6 +32,7 @@ defmodule ApiWeb.Router do
         resources "/bottle_feedings", BottleFeedingController, only: [:index, :create]
         resources "/breastfeeding_logs", BreastfeedingLogController, only: [:index, :create]
         get "/charts", ChartController, :index
+        get "/export", ExportController, :show
       end
 
       resources "/diaper_logs", DiaperLogController, only: [:update, :delete]

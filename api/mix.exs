@@ -47,7 +47,8 @@ defmodule Api.MixProject do
       {:swoosh, "~> 1.16"},
       {:gen_smtp, "~> 1.2"},
       {:finch, "~> 0.18"},
-      {:oban, "~> 2.18"}
+      {:oban, "~> 2.18"},
+      {:pdf, "~> 0.8.4"}
     ]
   end
 
