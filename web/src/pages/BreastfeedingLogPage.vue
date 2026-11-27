@@ -55,7 +55,13 @@ const activeRange = computed(() => {
 
 async function reload() {
   if (!babies.activeBaby) return;
-  await breastfeedingLogs.fetchLogs(babies.activeBaby.id, activeRange.value);
+  const babyId = babies.activeBaby.id;
+  // Swallowed: a GET that fails while offline shouldn't blank the page —
+  // just keep whatever was already loaded, then layer in anything still
+  // queued below (so a reload that happens while still offline doesn't
+  // make an already-safely-queued log look lost).
+  await breastfeedingLogs.fetchLogs(babyId, activeRange.value).catch(() => {});
+  breastfeedingLogs.restoreQueued(babyId);
 }
 
 onMounted(reload);
@@ -188,7 +194,7 @@ async function onDelete(log: BreastfeedingLog) {
         v-for="log in group.logs"
         :key="log.id"
         class="log-row"
-        :class="{ pending: log.id < 0 }"
+        :class="{ pending: log.id < 0 && !log._queued, 'pending-offline': log._queued }"
       >
         <template v-if="editingId === log.id">
           <form class="log-edit-form" @submit.prevent="saveEdit">
@@ -331,6 +337,16 @@ async function onDelete(log: BreastfeedingLog) {
 
 .log-row.pending {
   opacity: 0.6;
+}
+
+/* Ambient, not an alert — a dashed outline for an entry still waiting on
+   connectivity to sync, distinct from the brief in-flight opacity dip
+   above, which usually resolves in well under a second. */
+.log-row.pending-offline {
+  border: 1px dashed var(--color-ink-secondary);
+  border-radius: 8px;
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 .log-row-time {

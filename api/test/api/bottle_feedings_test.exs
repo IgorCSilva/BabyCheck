@@ -82,6 +82,17 @@ defmodule Api.BottleFeedingsTest do
 
       assert "must be greater than or equal to 0" in errors_on(changeset).water_ml
     end
+
+    test "a repeated client_request_id returns the original row instead of duplicating" do
+      baby = baby_fixture(user_fixture())
+      attrs = %{logged_at: ~U[2026-11-20 08:00:00Z], client_request_id: "temp-123"}
+
+      assert {:ok, first} = BottleFeedings.create_feeding(baby, attrs)
+      assert {:ok, second} = BottleFeedings.create_feeding(baby, attrs)
+
+      assert first.id == second.id
+      assert length(BottleFeedings.list_feedings(baby)) == 1
+    end
   end
 
   describe "list_feedings/2" do

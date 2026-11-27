@@ -1,4 +1,7 @@
 export interface MessageSchema {
+  app: {
+    offlineBanner: string;
+  };
   nav: {
     feed: string;
     diaperLog: string;
@@ -187,6 +190,9 @@ export interface ServerErrorMessages {
 }
 
 const en: MessageSchema = {
+  app: {
+    offlineBanner: "Offline — logs will sync when you're back online",
+  },
   nav: {
     feed: "Home",
     diaperLog: "Diaper log",
