@@ -7,6 +7,7 @@ import { useBottleFeedingsStore } from "@/stores/bottleFeedings";
 import { useBreastfeedingLogsStore } from "@/stores/breastfeedingLogs";
 import { useFeedStore } from "@/stores/feed";
 import { useChartsStore } from "@/stores/charts";
+import { useGrowthMeasurementsStore } from "@/stores/growthMeasurements";
 import { useOutboxStore } from "@/stores/outbox";
 import TopBar from "@/components/TopBar.vue";
 import PageNav from "@/components/PageNav.vue";
@@ -20,6 +21,7 @@ const bottleFeedings = useBottleFeedingsStore();
 const breastfeedingLogs = useBreastfeedingLogsStore();
 const feed = useFeedStore();
 const charts = useChartsStore();
+const growthMeasurements = useGrowthMeasurementsStore();
 const outbox = useOutboxStore();
 
 // Independent of auth state (harmless either way — `flush` only ever sends
@@ -40,6 +42,7 @@ watch(
       breastfeedingLogs.reset();
       feed.reset();
       charts.reset();
+      growthMeasurements.reset();
     }
   },
 );

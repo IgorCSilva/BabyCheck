@@ -1,16 +1,21 @@
 defmodule Api.Feed do
   @moduledoc """
-  Merges diaper logs, bottle feedings, and breastfeeding logs across every
-  baby an account owns into a single chronological feed, plus a per-baby
-  "time since last" summary for the three metrics.
+  Merges diaper logs, bottle feedings, breastfeeding logs, and growth
+  measurements across every baby an account owns into a single
+  chronological feed, plus a per-baby "time since last" summary for the
+  three quick-log metrics (growth measurements are occasional, not a daily
+  cadence, so they don't get a summary chip the way the other three do).
 
-  `list_entries/2` fetches up to `limit` rows from each of the three tables
-  (each already ordered `logged_at desc`) and merges them client-side: the
-  true global top-`limit` across any set of sorted streams can never need
-  more than `limit` rows from any single stream, so this is exact, not an
-  approximation. Pagination is cursor-based on `logged_at` (`before`) rather
-  than offset-based, so new logs landing while a user scrolls never shift
-  already-seen pages.
+  `list_entries/2` fetches up to `limit` rows from each of the three
+  quick-log tables (each already ordered `logged_at desc`) and merges them
+  client-side: the true global top-`limit` across any set of sorted streams
+  can never need more than `limit` rows from any single stream, so this is
+  exact, not an approximation. Growth measurements are fetched in full per
+  baby instead (occasional entries — the table is never large enough for a
+  per-stream `limit` to matter) and filtered by the same cursor before the
+  merge, preserving that same exactness guarantee. Pagination is
+  cursor-based on `logged_at` (`before`) rather than offset-based, so new
+  logs landing while a user scrolls never shift already-seen pages.
   """
 
   import Ecto.Query, warn: false
@@ -21,6 +26,7 @@ defmodule Api.Feed do
   alias Api.BottleFeedings.BottleFeeding
   alias Api.BreastfeedingLogs.BreastfeedingLog
   alias Api.DiaperLogs.DiaperLog
+  alias Api.GrowthMeasurements.GrowthMeasurement
   alias Api.Insights
 
   def list_entries(%User{} = user, opts \\ %{}) do
@@ -32,7 +38,8 @@ defmodule Api.Feed do
     [
       fetch_stream(DiaperLog, baby_ids, before, limit, "diaper", babies_by_id),
       fetch_stream(BottleFeeding, baby_ids, before, limit, "bottle", babies_by_id),
-      fetch_stream(BreastfeedingLog, baby_ids, before, limit, "breastfeeding", babies_by_id)
+      fetch_stream(BreastfeedingLog, baby_ids, before, limit, "breastfeeding", babies_by_id),
+      fetch_growth_stream(baby_ids, before, babies_by_id)
     ]
     |> Enum.concat()
     |> Enum.sort_by(& &1.logged_at, {:desc, DateTime})
@@ -99,7 +106,48 @@ defmodule Api.Feed do
       peed: Map.get(log, :peed, nil),
       pooped: Map.get(log, :pooped, nil),
       water_ml: Map.get(log, :water_ml, nil),
-      formula_g: Map.get(log, :formula_g, nil)
+      formula_g: Map.get(log, :formula_g, nil),
+      weight_kg: nil,
+      height_cm: nil
+    }
+  end
+
+  defp fetch_growth_stream([], _before, _babies_by_id), do: []
+
+  defp fetch_growth_stream(baby_ids, before, babies_by_id) do
+    GrowthMeasurement
+    |> where([m], m.baby_id in ^baby_ids)
+    |> Repo.all()
+    |> Enum.map(&build_growth_entry(&1, babies_by_id))
+    |> filter_growth_before(before)
+  end
+
+  defp filter_growth_before(entries, nil), do: entries
+
+  defp filter_growth_before(entries, before) do
+    Enum.filter(entries, &(DateTime.compare(&1.logged_at, before) == :lt))
+  end
+
+  # Growth measurements only carry a `measured_at` date (no time of day),
+  # so they're placed at midnight UTC on that date for the merge — this
+  # only has to put them in the right relative order among same-day
+  # quick-logs, not represent a real logging time.
+  defp build_growth_entry(measurement, babies_by_id) do
+    baby = babies_by_id[measurement.baby_id]
+
+    %{
+      type: "growth",
+      id: measurement.id,
+      baby_id: measurement.baby_id,
+      baby_name: baby.name,
+      baby_theme_color: baby.theme_color,
+      logged_at: DateTime.new!(measurement.measured_at, ~T[00:00:00], "Etc/UTC"),
+      peed: nil,
+      pooped: nil,
+      water_ml: nil,
+      formula_g: nil,
+      weight_kg: measurement.weight_kg,
+      height_cm: measurement.height_cm
     }
   end
 

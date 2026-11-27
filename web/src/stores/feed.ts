@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { apiRequest } from "@/lib/api";
 
 export interface FeedEntry {
-  type: "diaper" | "bottle" | "breastfeeding";
+  type: "diaper" | "bottle" | "breastfeeding" | "growth";
   id: number;
   baby_id: number;
   baby_name: string;
@@ -12,6 +12,8 @@ export interface FeedEntry {
   pooped: boolean | null;
   water_ml: number | null;
   formula_g: number | null;
+  weight_kg: number | null;
+  height_cm: number | null;
 }
 
 export interface BabyActivitySummary {

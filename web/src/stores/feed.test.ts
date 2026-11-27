@@ -36,6 +36,8 @@ function entry(overrides: Partial<FeedEntry> = {}): FeedEntry {
     pooped: false,
     water_ml: null,
     formula_g: null,
+    weight_kg: null,
+    height_cm: null,
     ...overrides,
   };
 }
