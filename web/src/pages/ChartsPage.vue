@@ -11,6 +11,7 @@ import {
 import { Bar } from "vue-chartjs";
 import { useBabiesStore } from "@/stores/babies";
 import { useChartsStore, type ChartPoint } from "@/stores/charts";
+import { resolvedTheme } from "@/theme";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip);
 
@@ -100,6 +101,11 @@ function metricTotal(metric: Metric): number {
 // can, so the fixed metric accents have to be read as literal computed
 // values rather than passed through as "var(--color-diaper)" strings.
 function cssVar(name: string): string {
+  // Reading resolvedTheme here (unused beyond this) ties this computation to
+  // Vue's reactivity: it's read during the template's render, so toggling
+  // the theme re-renders the chart with the new (dimmed) accent colors
+  // instead of only picking them up on the next unrelated re-render.
+  void resolvedTheme.value;
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
