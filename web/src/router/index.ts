@@ -42,6 +42,12 @@ export const router = createRouter({
       meta: { requiresAuth: true, requiresBaby: true },
     },
     {
+      path: "/growth",
+      name: "growth",
+      component: () => import("@/pages/GrowthMeasurementsPage.vue"),
+      meta: { requiresAuth: true, requiresBaby: true },
+    },
+    {
       path: "/login",
       name: "login",
       component: () => import("@/pages/LoginPage.vue"),

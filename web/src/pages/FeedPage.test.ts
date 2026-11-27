@@ -140,4 +140,40 @@ describe("FeedPage insight chips", () => {
     expect(queuedRow.exists()).toBe(true);
     expect(queuedRow.find(".feed-row-baby").text()).toBe("Riley");
   });
+
+  it("shows a growth measurement entry with its weight/height instead of an amount", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((url) => {
+      if (String(url).includes("/summary")) return Promise.resolve(jsonResponse(200, { data: [baseSummary()] }));
+      if (String(url).includes("/feed")) {
+        return Promise.resolve(
+          jsonResponse(200, {
+            data: [
+              {
+                type: "growth",
+                id: 1,
+                baby_id: 1,
+                baby_name: "Riley",
+                baby_theme_color: "#F5A9B8",
+                logged_at: "2026-11-20T00:00:00Z",
+                peed: null,
+                pooped: null,
+                water_ml: null,
+                formula_g: null,
+                weight_kg: 4.2,
+                height_cm: 55.0,
+              },
+            ],
+          }),
+        );
+      }
+      return Promise.resolve(jsonResponse(200, { data: [] }));
+    });
+
+    const wrapper = mountFeedPage();
+    await flushPromises();
+    await flushPromises();
+
+    const row = wrapper.find(".feed-row");
+    expect(row.find(".feed-row-amount").text()).toBe("4.2kg · 55cm");
+  });
 });

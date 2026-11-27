@@ -8,6 +8,7 @@ export interface MessageSchema {
     bottleFeeding: string;
     breastfeeding: string;
     charts: string;
+    growth: string;
     manageBabies: string;
     logout: string;
   };
@@ -167,6 +168,30 @@ export interface MessageSchema {
     undo: string;
     backHome: string;
   };
+  growth: {
+    heading: string;
+    addTitle: string;
+    editTitle: string;
+    weightLabel: string;
+    heightLabel: string;
+    dateLabel: string;
+    addSubmit: string;
+    saveSubmit: string;
+    saving: string;
+    cancel: string;
+    edit: string;
+    delete: string;
+    confirmDelete: string;
+    empty: string;
+    weightUnit: string;
+    heightUnit: string;
+    weightTrend: string;
+    heightTrend: string;
+    backHome: string;
+    export: string;
+    exporting: string;
+    exportError: string;
+  };
   serverErrors: {
     codes: {
       invalid_credentials: string;
@@ -191,7 +216,9 @@ export interface ServerErrorMessages {
     | "does not match password"
     | "has already been taken"
     | "must be a hex color like #F5A9B8"
-    | "is invalid",
+    | "is invalid"
+    | "weight or height must be present"
+    | "must be greater than 0",
     string
   >;
   lengthAtLeast: string;
@@ -208,6 +235,7 @@ const en: MessageSchema = {
     bottleFeeding: "Bottle feeding",
     breastfeeding: "Breastfeeding",
     charts: "Charts",
+    growth: "Growth",
     manageBabies: "Manage babies",
     logout: "Log out",
   },
@@ -368,6 +396,30 @@ const en: MessageSchema = {
     undo: "Undo",
     backHome: "Back home",
   },
+  growth: {
+    heading: "Growth measurements",
+    addTitle: "Add a measurement",
+    editTitle: "Edit measurement",
+    weightLabel: "Weight (kg)",
+    heightLabel: "Height (cm)",
+    dateLabel: "Date",
+    addSubmit: "Add measurement",
+    saveSubmit: "Save changes",
+    saving: "Saving…",
+    cancel: "Cancel",
+    edit: "Edit",
+    delete: "Delete",
+    confirmDelete: "Delete this measurement? This can't be undone.",
+    empty: "No growth measurements recorded yet.",
+    weightUnit: "kg",
+    heightUnit: "cm",
+    weightTrend: "Weight trend",
+    heightTrend: "Height trend",
+    backHome: "Back home",
+    export: "Export PDF",
+    exporting: "Exporting…",
+    exportError: "Couldn't export the PDF. Please try again.",
+  },
   serverErrors: {
     codes: {
       invalid_credentials: "invalid email or password",
@@ -387,6 +439,8 @@ export const enServerErrorMessages: ServerErrorMessages = {
     "has already been taken": "has already been taken",
     "must be a hex color like #F5A9B8": "must be a hex color like #F5A9B8",
     "is invalid": "is invalid",
+    "weight or height must be present": "enter a weight or a height",
+    "must be greater than 0": "must be greater than 0",
   },
   lengthAtLeast: "should be at least {count} character(s)",
   lengthAtMost: "should be at most {count} character(s)",

@@ -6,6 +6,7 @@ defmodule ApiWeb.FeedControllerTest do
   alias Api.BottleFeedings
   alias Api.BreastfeedingLogs
   alias Api.DiaperLogs
+  alias Api.GrowthMeasurements
 
   defp user_fixture(attrs \\ %{}) do
     {:ok, user} =
@@ -56,6 +57,15 @@ defmodule ApiWeb.FeedControllerTest do
     log
   end
 
+  defp growth_fixture(baby, attrs \\ %{}) do
+    {:ok, measurement} =
+      attrs
+      |> Enum.into(%{weight_kg: 4.2, measured_at: ~D[2026-11-20]})
+      |> then(&GrowthMeasurements.create_measurement(baby, &1))
+
+    measurement
+  end
+
   defp authed_conn(conn, user) do
     {:ok, access_token, _refresh} = Accounts.create_session(user, false)
     put_req_header(conn, "authorization", "Bearer #{access_token}")
@@ -91,6 +101,23 @@ defmodule ApiWeb.FeedControllerTest do
       assert second["type"] == "diaper"
       assert second["id"] == diaper.id
       assert second["baby_name"] == "Riley"
+    end
+
+    test "includes growth measurements with their weight/height", %{conn: conn} do
+      user = user_fixture()
+      baby = baby_fixture(user)
+      growth = growth_fixture(baby, %{weight_kg: 4.2, height_cm: 55.0, measured_at: ~D[2026-11-21]})
+
+      conn =
+        conn
+        |> authed_conn(user)
+        |> get(~p"/api/feed")
+
+      assert %{"data" => [entry]} = json_response(conn, 200)
+      assert entry["type"] == "growth"
+      assert entry["id"] == growth.id
+      assert entry["weight_kg"] == 4.2
+      assert entry["height_cm"] == 55.0
     end
 
     test "excludes another user's entries", %{conn: conn} do
