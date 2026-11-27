@@ -36,6 +36,14 @@ defmodule ApiWeb.Endpoint do
 
   defp cors(conn, _opts) do
     origin = Application.get_env(:api, :cors_origin, "http://localhost:3000")
-    CORSPlug.call(conn, CORSPlug.init(origin: [origin], credentials: true))
+
+    CORSPlug.call(
+      conn,
+      CORSPlug.init(
+        origin: [origin],
+        credentials: true,
+        expose: ["Content-Disposition"]
+      )
+    )
   end
 end
