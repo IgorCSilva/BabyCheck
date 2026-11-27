@@ -70,6 +70,17 @@ defmodule Api.DiaperLogsTest do
       assert {:error, changeset} = DiaperLogs.create_log(baby, %{})
       assert "can't be blank" in errors_on(changeset).logged_at
     end
+
+    test "a repeated client_request_id returns the original row instead of duplicating" do
+      baby = baby_fixture(user_fixture())
+      attrs = %{logged_at: ~U[2026-11-20 08:00:00Z], client_request_id: "temp-123"}
+
+      assert {:ok, first} = DiaperLogs.create_log(baby, attrs)
+      assert {:ok, second} = DiaperLogs.create_log(baby, attrs)
+
+      assert first.id == second.id
+      assert length(DiaperLogs.list_logs(baby)) == 1
+    end
   end
 
   describe "list_logs/2" do

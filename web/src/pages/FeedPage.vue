@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useBabiesStore } from "@/stores/babies";
 import { useFeedStore, type BabyActivitySummary, type FeedEntry } from "@/stores/feed";
+import { useOutboxStore } from "@/stores/outbox";
 
 type Metric = "diaper" | "bottle" | "breastfeeding";
+type DisplayFeedEntry = FeedEntry & { _queued?: boolean };
 
 const METRICS: Metric[] = ["diaper", "bottle", "breastfeeding"];
 const METRIC_ICONS: Record<Metric, string> = { diaper: "🧷", bottle: "🍼", breastfeeding: "🤱" };
@@ -13,7 +15,35 @@ const GLOW_DURATION_MS = 1500;
 
 const babies = useBabiesStore();
 const feed = useFeedStore();
+const outbox = useOutboxStore();
 const { t, locale } = useI18n();
+
+// Entries still sitting in the offline outbox, shown as a dashed-border row
+// right alongside confirmed ones — reactive to `outbox.entries` directly
+// rather than copied into `feed.entries`, so a row just disappears here the
+// moment it's no longer queued (synced or cancelled), no separate
+// reconciliation step needed.
+const displayEntries = computed<DisplayFeedEntry[]>(() => {
+  const queuedRows: DisplayFeedEntry[] = outbox.entries.map((entry) => {
+    const baby = babies.babies.find((candidate) => candidate.id === entry.baby_id);
+    const payload = entry.payload as Record<string, unknown>;
+    return {
+      type: entry.metric,
+      id: entry.tempId,
+      baby_id: entry.baby_id,
+      baby_name: baby?.name ?? "",
+      baby_theme_color: baby?.theme_color ?? "",
+      logged_at: payload.logged_at as string,
+      peed: (payload.peed as boolean | undefined) ?? null,
+      pooped: (payload.pooped as boolean | undefined) ?? null,
+      water_ml: (payload.water_ml as number | undefined) ?? null,
+      formula_g: (payload.formula_g as number | undefined) ?? null,
+      _queued: true,
+    };
+  });
+
+  return [...queuedRows, ...feed.entries].sort((a, b) => b.logged_at.localeCompare(a.logged_at));
+});
 
 const sentinel = ref<HTMLElement | null>(null);
 const glowingChips = ref(new Set<string>());
@@ -155,12 +185,17 @@ function entryKey(entry: FeedEntry): string {
       </div>
     </div>
 
-    <div v-if="feed.entries.length === 0 && !feed.loading" class="empty-state">
+    <div v-if="displayEntries.length === 0 && !feed.loading" class="empty-state">
       {{ t("feed.empty") }}
     </div>
 
     <div class="feed-list">
-      <div v-for="entry in feed.entries" :key="entryKey(entry)" class="feed-row">
+      <div
+        v-for="entry in displayEntries"
+        :key="entryKey(entry)"
+        class="feed-row"
+        :class="{ 'feed-row-queued': entry._queued }"
+      >
         <span class="feed-row-dot" :style="{ '--baby-color': entry.baby_theme_color }"></span>
         <span class="feed-row-icon">{{ metricIcon(entry.type) }}</span>
         <span class="feed-row-baby">{{ entry.baby_name }}</span>
@@ -317,6 +352,15 @@ function entryKey(entry: FeedEntry): string {
   gap: var(--space-1);
   padding: 10px 0;
   border-bottom: 1px solid var(--color-border);
+}
+
+/* Ambient, not an alert — a still-syncing row gets a quiet dashed outline
+   rather than a warning color, matching the long-gap chip's "noticeable on
+   a glance" treatment from Step 9. */
+.feed-row-queued {
+  border: 1px dashed var(--color-ink-secondary);
+  border-radius: var(--radius-card);
+  padding: 10px var(--space-1);
 }
 
 .feed-row-dot {

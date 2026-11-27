@@ -51,10 +51,32 @@ defmodule Api.BreastfeedingLogs do
     end
   end
 
+  # `client_request_id` lets a retried create (e.g. the offline outbox replaying a
+  # mutation whose original response never arrived) return the row that already
+  # exists instead of erroring or inserting a duplicate. Without one, a plain
+  # insert runs as before.
   def create_log(%Baby{} = baby, attrs) do
-    %BreastfeedingLog{baby_id: baby.id}
-    |> BreastfeedingLog.changeset(attrs)
-    |> Repo.insert()
+    changeset = BreastfeedingLog.changeset(%BreastfeedingLog{baby_id: baby.id}, attrs)
+
+    case client_request_id(attrs) do
+      nil -> Repo.insert(changeset)
+      client_request_id -> insert_idempotent(changeset, client_request_id)
+    end
+  end
+
+  defp client_request_id(attrs), do: attrs["client_request_id"] || attrs[:client_request_id]
+
+  defp insert_idempotent(changeset, client_request_id) do
+    case Repo.insert(changeset, on_conflict: :nothing, conflict_target: :client_request_id) do
+      {:ok, %BreastfeedingLog{id: nil}} ->
+        {:ok, Repo.get_by!(BreastfeedingLog, client_request_id: client_request_id)}
+
+      {:ok, log} ->
+        {:ok, log}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
 
   def update_log(%BreastfeedingLog{} = log, attrs) do

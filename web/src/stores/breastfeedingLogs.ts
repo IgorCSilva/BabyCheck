@@ -1,10 +1,16 @@
 import { defineStore } from "pinia";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, ApiError } from "@/lib/api";
+import { useOutboxStore } from "@/stores/outbox";
 
 export interface BreastfeedingLog {
   id: number;
   baby_id: number;
   logged_at: string;
+  // Set on a row still sitting in the offline outbox, waiting for
+  // connectivity — distinct from the brief in-flight `id < 0` window every
+  // optimistic insert goes through, which usually resolves in well under a
+  // second.
+  _queued?: boolean;
 }
 
 export interface DateRange {
@@ -49,29 +55,75 @@ export const useBreastfeedingLogsStore = defineStore("breastfeedingLogs", {
     // then swaps it for the server's record once the request resolves. The
     // returned promise lets the caller's "Undo" button await the real id
     // before issuing the delete, even if clicked before the request lands.
+    //
+    // The request is always attempted immediately, online or not — only a
+    // genuine network failure (not a real server error) falls back to the
+    // offline outbox, so a flaky connection gets the same safety net as a
+    // hard offline state, not just whatever `navigator.onLine` happens to
+    // report.
     quickLog(babyId: number): { tempId: number; promise: Promise<BreastfeedingLog> } {
       const tempId = -Date.now();
-      this.logs.unshift({
-        id: tempId,
-        baby_id: babyId,
-        logged_at: new Date().toISOString(),
-      });
+      const payload = { logged_at: new Date().toISOString() };
+      this.logs.unshift({ id: tempId, baby_id: babyId, ...payload });
 
-      const promise = apiRequest<BreastfeedingLog>(
-        `/api/babies/${babyId}/breastfeeding_logs`,
-        { method: "POST" },
-      )
+      const promise = apiRequest<BreastfeedingLog>(`/api/babies/${babyId}/breastfeeding_logs`, {
+        method: "POST",
+        body: { ...payload, client_request_id: String(tempId) },
+      })
         .then((log) => {
-          const index = this.logs.findIndex((entry) => entry.id === tempId);
-          if (index !== -1) this.logs.splice(index, 1, log);
+          this.resolvePending(tempId, log);
           return log;
         })
         .catch((error) => {
-          this.logs = this.logs.filter((entry) => entry.id !== tempId);
-          throw error;
+          if (error instanceof ApiError) {
+            this.logs = this.logs.filter((entry) => entry.id !== tempId);
+            throw error;
+          }
+
+          const row = this.logs.find((entry) => entry.id === tempId);
+          if (row) row._queued = true;
+          return useOutboxStore().enqueue({
+            tempId,
+            metric: "breastfeeding",
+            baby_id: babyId,
+            payload,
+          }) as Promise<BreastfeedingLog>;
         });
 
       return { tempId, promise };
+    },
+
+    resolvePending(tempId: number, log: BreastfeedingLog) {
+      const index = this.logs.findIndex((entry) => entry.id === tempId);
+      if (index !== -1) this.logs.splice(index, 1, log);
+    },
+
+    // Reconciles the outbox's persisted view with this store's in-memory
+    // `logs` — needed because a reload while still offline starts with an
+    // empty store, so an entry queued before the reload would otherwise
+    // vanish from view until it eventually syncs, even though it was never
+    // actually lost.
+    restoreQueued(babyId: number) {
+      for (const entry of useOutboxStore().entriesFor("breastfeeding", babyId)) {
+        if (this.logs.some((log) => log.id === entry.tempId)) continue;
+        this.logs.unshift({
+          id: entry.tempId,
+          baby_id: babyId,
+          ...(entry.payload as { logged_at: string }),
+          _queued: true,
+        });
+      }
+      this.logs.sort((a, b) => b.logged_at.localeCompare(a.logged_at));
+    },
+
+    // Undo on an entry that hasn't synced yet: cancel it before it's ever
+    // sent, instead of awaiting a promise that won't resolve until
+    // reconnect. Returns whether it actually was still queued — the caller
+    // falls back to the normal await-then-delete flow otherwise.
+    tryDiscard(tempId: number): boolean {
+      if (!useOutboxStore().cancelIfQueued(tempId)) return false;
+      this.logs = this.logs.filter((entry) => entry.id !== tempId);
+      return true;
     },
 
     async updateLog(id: number, attrs: { logged_at: string }) {

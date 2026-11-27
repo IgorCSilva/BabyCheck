@@ -1,6 +1,9 @@
 import type { MessageSchema, ServerErrorMessages } from "./en";
 
 const ptBR: MessageSchema = {
+  app: {
+    offlineBanner: "Offline — os registros serão sincronizados quando você voltar a ficar online",
+  },
   nav: {
     feed: "Início",
     diaperLog: "Registro de fraldas",

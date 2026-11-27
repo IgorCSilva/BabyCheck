@@ -73,6 +73,15 @@ function deleteFor(metric: Metric, id: number) {
   return breastfeedingLogs.deleteLog(id);
 }
 
+// If the entry hasn't synced yet (still sitting in the offline outbox),
+// cancel it outright rather than awaiting a promise that won't resolve
+// until connectivity returns. Returns whether that's what happened.
+function tryDiscardFor(metric: Metric, tempId: number): boolean {
+  if (metric === "diaper") return diaperLogs.tryDiscard(tempId);
+  if (metric === "bottle") return bottleFeedings.tryDiscard(tempId);
+  return breastfeedingLogs.tryDiscard(tempId);
+}
+
 // The bar can log from anywhere, including while the Feed or Charts page is
 // already open behind it — but both of those read from their own separately
 // fetched aggregates (the merged feed, the per-day chart buckets), not from
@@ -117,6 +126,8 @@ async function onUndo() {
   if (!entry) return;
   toast.value = null;
   if (toastTimeout) clearTimeout(toastTimeout);
+
+  if (tryDiscardFor(entry.metric, entry.tempId)) return;
 
   try {
     const logged = await entry.promise;

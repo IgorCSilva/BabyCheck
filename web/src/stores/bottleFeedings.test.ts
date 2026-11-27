@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { useBottleFeedingsStore } from "./bottleFeedings";
+import { useOutboxStore } from "./outbox";
 
 function jsonResponse(status: number, body: unknown) {
   return new Response(status === 204 ? null : JSON.stringify(body), { status });
@@ -67,6 +68,52 @@ describe("bottleFeedings store", () => {
     await expect(promise).rejects.toThrow();
 
     expect(bottleFeedings.feedings).toHaveLength(0);
+  });
+
+  it("quickLog falls back to the offline outbox on a network failure instead of rolling back", async () => {
+    const bottleFeedings = useBottleFeedingsStore();
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));
+
+    const { tempId } = bottleFeedings.quickLog(1);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(bottleFeedings.feedings).toHaveLength(1);
+    const row = bottleFeedings.feedings.find((feeding) => feeding.id === tempId);
+    expect(row?._queued).toBe(true);
+
+    const outbox = useOutboxStore();
+    expect(outbox.entriesFor("bottle", 1).map((entry) => entry.tempId)).toContain(tempId);
+  });
+
+  it("restoreQueued re-inserts a still-queued outbox entry after a reload", () => {
+    const bottleFeedings = useBottleFeedingsStore();
+    const outbox = useOutboxStore();
+    outbox.entries = [
+      {
+        tempId: -123,
+        metric: "bottle",
+        baby_id: 1,
+        payload: { logged_at: "2026-11-24T10:00:00Z", water_ml: 30, formula_g: 10 },
+      },
+    ];
+
+    bottleFeedings.restoreQueued(1);
+
+    expect(bottleFeedings.feedings).toHaveLength(1);
+    expect(bottleFeedings.feedings[0]).toMatchObject({ id: -123, baby_id: 1, _queued: true });
+  });
+
+  it("tryDiscard cancels a still-queued entry without ever hitting the network", () => {
+    const bottleFeedings = useBottleFeedingsStore();
+    bottleFeedings.feedings = [
+      { id: -123, baby_id: 1, logged_at: "2026-11-24T10:00:00Z", water_ml: 30, formula_g: 10, _queued: true },
+    ];
+    const outbox = useOutboxStore();
+    outbox.entries = [{ tempId: -123, metric: "bottle", baby_id: 1, payload: {} }];
+
+    expect(bottleFeedings.tryDiscard(-123)).toBe(true);
+    expect(bottleFeedings.feedings).toHaveLength(0);
+    expect(outbox.entries).toHaveLength(0);
   });
 
   it("updateFeeding replaces the entry and keeps the list sorted by logged_at desc", async () => {
