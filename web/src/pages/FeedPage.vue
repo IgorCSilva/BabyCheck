@@ -9,8 +9,17 @@ import { dimForTheme } from "@/theme";
 type Metric = "diaper" | "bottle" | "breastfeeding";
 type DisplayFeedEntry = FeedEntry & { _queued?: boolean };
 
+// METRICS covers only the three quick-log types that get a summary chip in
+// the stat strip above — growth measurements are occasional, not a daily
+// cadence, so they appear in the feed list below but never as a chip.
 const METRICS: Metric[] = ["diaper", "bottle", "breastfeeding"];
 const METRIC_ICONS: Record<Metric, string> = { diaper: "🧷", bottle: "🍼", breastfeeding: "🤱" };
+const ENTRY_ICONS: Record<FeedEntry["type"], string> = {
+  diaper: "🧷",
+  bottle: "🍼",
+  breastfeeding: "🤱",
+  growth: "📏",
+};
 const SUMMARY_POLL_MS = 15_000;
 const GLOW_DURATION_MS = 1500;
 
@@ -39,6 +48,11 @@ const displayEntries = computed<DisplayFeedEntry[]>(() => {
       pooped: (payload.pooped as boolean | undefined) ?? null,
       water_ml: (payload.water_ml as number | undefined) ?? null,
       formula_g: (payload.formula_g as number | undefined) ?? null,
+      // Growth measurements never go through the offline outbox (they're
+      // occasional, deliberate entries, not quick-logs), so a queued row
+      // here is always one of the other three metrics.
+      weight_kg: null,
+      height_cm: null,
       _queued: true,
     };
   });
@@ -58,6 +72,17 @@ function chipKey(babyId: number, metric: Metric): string {
 
 function metricIcon(metric: Metric): string {
   return METRIC_ICONS[metric];
+}
+
+function entryIcon(type: FeedEntry["type"]): string {
+  return ENTRY_ICONS[type];
+}
+
+function growthSummary(entry: DisplayFeedEntry): string {
+  const parts: string[] = [];
+  if (entry.weight_kg !== null) parts.push(`${entry.weight_kg}${t("growth.weightUnit")}`);
+  if (entry.height_cm !== null) parts.push(`${entry.height_cm}${t("growth.heightUnit")}`);
+  return parts.join(" · ");
 }
 
 function metricLastLoggedAt(summary: BabyActivitySummary, metric: Metric): string | null {
@@ -122,7 +147,19 @@ onUnmounted(() => {
   observer?.disconnect();
 });
 
-function relativeTime(iso: string): string {
+// Growth entries carry a date-only `measured_at` pinned to midnight UTC
+// (see api/lib/api/feed.ex) rather than a real moment in time, so they're
+// formatted from UTC date parts — converting to local time can shift them
+// into the previous calendar day for timezones behind UTC.
+function relativeTime(iso: string, dateOnly = false): string {
+  if (dateOnly) {
+    return new Date(iso).toLocaleDateString(locale.value, {
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    });
+  }
+
   const diffMs = Date.now() - new Date(iso).getTime();
   const minutes = Math.floor(diffMs / 60_000);
   if (minutes < 1) return t("feed.justNow");
@@ -198,12 +235,15 @@ function entryKey(entry: FeedEntry): string {
         :class="{ 'feed-row-queued': entry._queued }"
       >
         <span class="feed-row-dot" :style="{ '--baby-color': dimForTheme(entry.baby_theme_color) }"></span>
-        <span class="feed-row-icon">{{ metricIcon(entry.type) }}</span>
+        <span class="feed-row-icon">{{ entryIcon(entry.type) }}</span>
         <span class="feed-row-baby">{{ entry.baby_name }}</span>
         <span v-if="entry.type === 'bottle'" class="feed-row-amount">
           {{ t("bottleFeeding.amountSummary", { water: entry.water_ml, formula: entry.formula_g }) }}
         </span>
-        <span class="feed-row-time">{{ relativeTime(entry.logged_at) }}</span>
+        <span v-else-if="entry.type === 'growth'" class="feed-row-amount">
+          {{ growthSummary(entry) }}
+        </span>
+        <span class="feed-row-time">{{ relativeTime(entry.logged_at, entry.type === "growth") }}</span>
       </div>
     </div>
 

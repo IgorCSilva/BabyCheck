@@ -7,6 +7,7 @@ defmodule Api.FeedTest do
   alias Api.BreastfeedingLogs
   alias Api.DiaperLogs
   alias Api.Feed
+  alias Api.GrowthMeasurements
 
   defp user_fixture(attrs \\ %{}) do
     {:ok, user} =
@@ -55,6 +56,15 @@ defmodule Api.FeedTest do
       |> then(&BreastfeedingLogs.create_log(baby, &1))
 
     log
+  end
+
+  defp growth_fixture(baby, attrs \\ %{}) do
+    {:ok, measurement} =
+      attrs
+      |> Enum.into(%{weight_kg: 4.2, measured_at: ~D[2026-11-20]})
+      |> then(&GrowthMeasurements.create_measurement(baby, &1))
+
+    measurement
   end
 
   describe "list_entries/2" do
@@ -106,6 +116,44 @@ defmodule Api.FeedTest do
                %{type: "bottle", water_ml: 60, formula_g: 15, peed: nil, pooped: nil},
                %{type: "diaper", peed: true, pooped: false, water_ml: nil, formula_g: nil}
              ] = Feed.list_entries(user)
+    end
+
+    test "includes growth measurements alongside the three quick-log metrics" do
+      user = user_fixture()
+      baby = baby_fixture(user)
+
+      diaper = diaper_fixture(baby, %{logged_at: ~U[2026-11-20 08:00:00Z]})
+      growth = growth_fixture(baby, %{weight_kg: 4.2, height_cm: 55.0, measured_at: ~D[2026-11-21]})
+
+      assert [
+               %{type: "growth", id: growth_id, weight_kg: 4.2, height_cm: 55.0},
+               %{type: "diaper", id: diaper_id, weight_kg: nil, height_cm: nil}
+             ] = Feed.list_entries(user)
+
+      assert growth_id == growth.id
+      assert diaper_id == diaper.id
+    end
+
+    test "a growth measurement sorts by its date among same-day quick-logs" do
+      user = user_fixture()
+      baby = baby_fixture(user)
+
+      growth_fixture(baby, %{measured_at: ~D[2026-11-20]})
+      diaper_fixture(baby, %{logged_at: ~U[2026-11-20 08:00:00Z]})
+
+      assert [%{type: "diaper"}, %{type: "growth"}] = Feed.list_entries(user)
+    end
+
+    test "respects the before cursor for growth measurements too" do
+      user = user_fixture()
+      baby = baby_fixture(user)
+      older = growth_fixture(baby, %{measured_at: ~D[2026-11-10]})
+      growth_fixture(baby, %{measured_at: ~D[2026-11-20]})
+
+      entries = Feed.list_entries(user, %{before: ~U[2026-11-15 00:00:00Z]})
+
+      assert [%{type: "growth", id: id}] = entries
+      assert id == older.id
     end
 
     test "respects the before cursor" do

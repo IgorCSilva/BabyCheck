@@ -18,7 +18,9 @@ defmodule ApiWeb.FeedJSON do
       peed: entry.peed,
       pooped: entry.pooped,
       water_ml: entry.water_ml,
-      formula_g: entry.formula_g
+      formula_g: entry.formula_g,
+      weight_kg: entry.weight_kg,
+      height_cm: entry.height_cm
     }
   end
 
