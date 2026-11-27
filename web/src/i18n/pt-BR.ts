@@ -18,6 +18,12 @@ const ptBR: MessageSchema = {
     en: "EN",
     ptBR: "PT",
   },
+  theme: {
+    label: "Tema",
+    light: "Claro",
+    dark: "Escuro",
+    system: "Automático",
+  },
   feed: {
     heading: "Atividade recente",
     noLogsYet: "Ainda sem registros",

@@ -24,6 +24,26 @@
   --space-4: 32px;
 }
 
+/* Night Mode: a warm near-black (not a pure/cool black, to stay consistent
+   with the cream-and-charcoal warmth of the light palette) with every
+   accent dimmed and desaturated a step — least blue-heavy for the bottle
+   accent in particular, since blue light is the thing this step exists to
+   cut down on during a night feeding. */
+:root[data-theme="dark"] {
+  --color-bg: #1a1614;
+  --color-surface: #242019;
+  --color-border: #3a332c;
+  --color-ink: #f1e9e2;
+  --color-ink-secondary: #a89d92;
+  --color-accent: #6fa3aa;
+  --color-accent-contrast: #1a1614;
+  --color-success: #5b9478;
+  --color-danger: #c96a4f;
+  --color-diaper: #c9a067;
+  --color-bottle: #5c8cb0;
+  --color-breastfeeding: #c97a8d;
+}
+
 * {
   box-sizing: border-box;
 }

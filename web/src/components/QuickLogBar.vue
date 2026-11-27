@@ -7,6 +7,7 @@ import { useBottleFeedingsStore } from "@/stores/bottleFeedings";
 import { useBreastfeedingLogsStore } from "@/stores/breastfeedingLogs";
 import { useFeedStore } from "@/stores/feed";
 import { useChartsStore } from "@/stores/charts";
+import { dimForTheme } from "@/theme";
 
 type Metric = "diaper" | "bottle" | "breastfeeding";
 
@@ -146,7 +147,7 @@ async function onUndo() {
       :key="metric"
       class="quick-log-btn"
       :class="[`quick-log-btn-${metric}`, { glow: glowing[metric] }]"
-      :style="{ '--baby-color': babies.activeBaby.theme_color }"
+      :style="{ '--baby-color': dimForTheme(babies.activeBaby.theme_color) }"
       type="button"
       :aria-label="quickLogLabel(metric)"
       @click="onQuickLog(metric)"
