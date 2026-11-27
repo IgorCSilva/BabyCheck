@@ -16,6 +16,12 @@ export interface MessageSchema {
     en: string;
     ptBR: string;
   };
+  theme: {
+    label: string;
+    light: string;
+    dark: string;
+    system: string;
+  };
   feed: {
     heading: string;
     noLogsYet: string;
@@ -206,6 +212,12 @@ const en: MessageSchema = {
     label: "Language",
     en: "EN",
     ptBR: "PT",
+  },
+  theme: {
+    label: "Theme",
+    light: "Light",
+    dark: "Dark",
+    system: "Auto",
   },
   feed: {
     heading: "Recent activity",

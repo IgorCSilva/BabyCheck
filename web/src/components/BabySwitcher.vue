@@ -2,6 +2,7 @@
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useBabiesStore } from "@/stores/babies";
+import { dimForTheme } from "@/theme";
 
 const babies = useBabiesStore();
 const router = useRouter();
@@ -34,7 +35,7 @@ function goToBabies() {
         type="button"
         class="baby-avatar"
         :class="{ active: baby.id === babies.activeBabyId }"
-        :style="{ '--baby-color': baby.theme_color }"
+        :style="{ '--baby-color': dimForTheme(baby.theme_color) }"
         :title="baby.name"
         @click="selectBaby(baby.id)"
       >

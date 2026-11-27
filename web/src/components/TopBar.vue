@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/stores/auth";
 import BabySwitcher from "@/components/BabySwitcher.vue";
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
+import ThemeSwitcher from "@/components/ThemeSwitcher.vue";
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -21,19 +22,17 @@ async function onLogout() {
 
 <template>
   <header class="top-bar">
-    <BabySwitcher />
     <div class="top-bar-end">
+      <ThemeSwitcher />
       <LanguageSwitcher />
       <button class="logout-link" type="button" @click="onLogout">{{ t("nav.logout") }}</button>
     </div>
+    <BabySwitcher />
   </header>
 </template>
 
 <style scoped>
 .top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
   background: var(--color-surface);
@@ -43,8 +42,10 @@ async function onLogout() {
 .top-bar-end {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-1);
   flex-shrink: 0;
+  margin-bottom: 20px;
 }
 
 .logout-link {

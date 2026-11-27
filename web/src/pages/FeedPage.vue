@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { useBabiesStore } from "@/stores/babies";
 import { useFeedStore, type BabyActivitySummary, type FeedEntry } from "@/stores/feed";
 import { useOutboxStore } from "@/stores/outbox";
+import { dimForTheme } from "@/theme";
 
 type Metric = "diaper" | "bottle" | "breastfeeding";
 type DisplayFeedEntry = FeedEntry & { _queued?: boolean };
@@ -148,7 +149,7 @@ function entryKey(entry: FeedEntry): string {
 
     <div class="stat-strip">
       <div v-for="baby in babies.babies" :key="baby.id" class="baby-stat-row">
-        <span class="baby-dot" :style="{ '--baby-color': baby.theme_color }"></span>
+        <span class="baby-dot" :style="{ '--baby-color': dimForTheme(baby.theme_color) }"></span>
         <span class="baby-stat-name">{{ baby.name }}</span>
 
         <div class="chips">
@@ -196,7 +197,7 @@ function entryKey(entry: FeedEntry): string {
         class="feed-row"
         :class="{ 'feed-row-queued': entry._queued }"
       >
-        <span class="feed-row-dot" :style="{ '--baby-color': entry.baby_theme_color }"></span>
+        <span class="feed-row-dot" :style="{ '--baby-color': dimForTheme(entry.baby_theme_color) }"></span>
         <span class="feed-row-icon">{{ metricIcon(entry.type) }}</span>
         <span class="feed-row-baby">{{ entry.baby_name }}</span>
         <span v-if="entry.type === 'bottle'" class="feed-row-amount">
